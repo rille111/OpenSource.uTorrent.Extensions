@@ -1,0 +1,57 @@
+﻿using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
+using NLog;
+using RestSharp;
+using RestSharp.Authenticators;
+
+namespace Rille.uTorrent.Extensions.Unpack
+{
+    /// <summary>
+    /// http://help.utorrent.com/customer/en/portal/topics/664593-web-api-and-webui-/articles
+    /// 
+    /// http://help.utorrent.com/customer/en/portal/articles/1573947-torrent-labels-list---webapi
+    /// http://help.utorrent.com/customer/en/portal/articles/1573951-torrent-job-properties---webapi
+    /// http://help.utorrent.com/customer/en/portal/articles/1573949-files-list---webapi
+    /// http://help.utorrent.com/customer/en/portal/articles/1573952-actions---webapi
+    /// </summary>
+    public class UTorrentApiManager
+    {
+        private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
+        private readonly Config _config;
+        private RestClient _restClient;
+
+        public UTorrentApiManager(Config config)
+        {
+            _config = config;
+            _restClient = new RestClient(_config.ApiUrl);
+            _restClient.Authenticator = new HttpBasicAuthenticator(_config.ApiLogin, _config.ApiPassword);
+        }
+
+        public List<Torrent> GetTorrentList()
+        {
+            var ret = new List<Torrent>();
+            var req = new RestRequest("gui/?list=1");
+            //var resp = _restClient.Get<dynamic>(req);
+            var response = _restClient.Execute(req);
+            dynamic json = Newtonsoft.Json.Linq.JObject.Parse(response.Content);
+            var torrentsJArray = (JArray) json.torrents;
+            foreach (var jToken in torrentsJArray)
+            {
+                var torrent = new Torrent(jToken[0].ToString());
+                torrent.NumericStatus = (int) jToken[1];
+                torrent.Name = jToken[2].ToString();
+                torrent.Path = jToken[26].ToString();
+                torrent.ActualSeedRatio = (int) jToken[7];
+                ret.Add(torrent);
+            }
+
+            return ret;
+        }
+
+        public void DeleteTorrent(Torrent torrent)
+        {
+            
+        }
+    }
+
+}
