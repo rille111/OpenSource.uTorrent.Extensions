@@ -1,4 +1,6 @@
-﻿namespace Rille.uTorrent.Extensions.Unpack
+﻿using Rille.uTorrent.Extensions.PostProcess.Model;
+
+namespace Rille.uTorrent.Extensions.PostProcess.Services
 {
     public class Unpacker
     {

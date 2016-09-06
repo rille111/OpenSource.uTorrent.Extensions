@@ -3,12 +3,12 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rille.uTorrent.Extensions.Unpack", "Rille.uTorrent.Extensions.Unpack.csproj", "{46B95A38-59A4-42E7-BAFB-A1F2806591B7}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{98235135-837F-463D-AE94-72E64860C809}"
 	ProjectSection(SolutionItems) = preProject
-		config.json = config.json
+		SolutionFiles\config.txt = SolutionFiles\config.txt
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rille.uTorrent.Extensions.PostProcess", "Rille.uTorrent.Extensions.PostProcess\Rille.uTorrent.Extensions.PostProcess.csproj", "{46B95A38-59A4-42E7-BAFB-A1F2806591B7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

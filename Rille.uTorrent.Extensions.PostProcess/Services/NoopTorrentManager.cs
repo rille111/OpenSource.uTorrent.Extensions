@@ -4,12 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Rille.uTorrent.Extensions.CleanUp
+namespace Rille.uTorrent.Extensions.PostProcess.Services
 {
-    class Program
+    class NoopTorrentManager
     {
-        static void Main(string[] args)
-        {
-        }
     }
 }

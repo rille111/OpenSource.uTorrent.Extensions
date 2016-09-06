@@ -1,4 +1,4 @@
-﻿namespace Rille.uTorrent.Extensions.Unpack
+﻿namespace Rille.uTorrent.Extensions.PostProcess.Model
 {
     public class Torrent
     {

@@ -3,8 +3,9 @@ using Newtonsoft.Json.Linq;
 using NLog;
 using RestSharp;
 using RestSharp.Authenticators;
+using Rille.uTorrent.Extensions.PostProcess.Model;
 
-namespace Rille.uTorrent.Extensions.Unpack
+namespace Rille.uTorrent.Extensions.PostProcess.Services
 {
     /// <summary>
     /// http://help.utorrent.com/customer/en/portal/topics/664593-web-api-and-webui-/articles
@@ -14,17 +15,25 @@ namespace Rille.uTorrent.Extensions.Unpack
     /// http://help.utorrent.com/customer/en/portal/articles/1573949-files-list---webapi
     /// http://help.utorrent.com/customer/en/portal/articles/1573952-actions---webapi
     /// </summary>
-    public class UTorrentApiManager
+    // ReSharper disable once InconsistentNaming
+    // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
+    public class UTorrentManager : ITorrentManager
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
         private readonly Config _config;
-        private RestClient _restClient;
+        private readonly RestClient _restClient;
+        private FileManager fileManager;
 
-        public UTorrentApiManager(Config config)
+        public UTorrentManager(Config config)
         {
             _config = config;
             _restClient = new RestClient(_config.ApiUrl);
             _restClient.Authenticator = new HttpBasicAuthenticator(_config.ApiLogin, _config.ApiPassword);
+        }
+
+        public UTorrentManager(Config config, FileManager fileManager) : this(config)
+        {
+            this.fileManager = fileManager;
         }
 
         public List<Torrent> GetTorrentList()
@@ -33,7 +42,7 @@ namespace Rille.uTorrent.Extensions.Unpack
             var req = new RestRequest("gui/?list=1");
             //var resp = _restClient.Get<dynamic>(req);
             var response = _restClient.Execute(req);
-            dynamic json = Newtonsoft.Json.Linq.JObject.Parse(response.Content);
+            dynamic json = JObject.Parse(response.Content);
             var torrentsJArray = (JArray) json.torrents;
             foreach (var jToken in torrentsJArray)
             {
@@ -51,6 +60,16 @@ namespace Rille.uTorrent.Extensions.Unpack
         public void DeleteTorrent(Torrent torrent)
         {
             
+        }
+
+        public bool TorrentHasBeenPostProcessed(Torrent torrent)
+        {
+            return true;
+        }
+
+        public bool TorrentGoalsReached(Torrent torrent)
+        {
+            return true;
         }
     }
 

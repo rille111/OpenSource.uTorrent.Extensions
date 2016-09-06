@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Rille.uTorrent.Extensions.CleanUp")]
+[assembly: AssemblyTitle("Rille.uTorrent.Extensions.PostProcess")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Adlibris AB")]
-[assembly: AssemblyProduct("Rille.uTorrent.Extensions.CleanUp")]
-[assembly: AssemblyCopyright("Copyright © Adlibris AB 2016")]
+[assembly: AssemblyCompany("Rickard Robin IT")]
+[assembly: AssemblyProduct("Rille.uTorrent.Extensions.PostProcess")]
+[assembly: AssemblyCopyright("Copyright © Rickard Robin 2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("8fda8bd0-c8d2-49b8-a44d-31b621f29735")]
+[assembly: Guid("46b95a38-59a4-42e7-bafb-a1f2806591b7")]
 
 // Version information for an assembly consists of the following four values:
 //

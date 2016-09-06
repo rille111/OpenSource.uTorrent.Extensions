@@ -1,8 +1,8 @@
-﻿namespace Rille.uTorrent.Extensions.Unpack
+﻿namespace Rille.uTorrent.Extensions.PostProcess.Model
 {
     public class Config
     {
-        public string UnpackedFolder { get; set; } = "Z:\\"
+        public string UnpackedFolder { get; set; } = "Z:\\";
 
         /// <summary>
         /// ie: c:\program\7zip\7z.exe

@@ -1,4 +1,6 @@
-﻿namespace Rille.uTorrent.Extensions.Unpack
+﻿using Rille.uTorrent.Extensions.PostProcess.Model;
+
+namespace Rille.uTorrent.Extensions.PostProcess.Services
 {
     public class FileManager
     {
@@ -12,6 +14,11 @@
         public bool TorrentHasBeenPostProcessed(Torrent torrent)
         {
             return false;
+        }
+
+        public bool TorrentGoalsReached(Torrent torrent)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }
