@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using NLog;
 using Rille.uTorrent.Extensions.PostProcess.Model;
 using Rille.uTorrent.Extensions.PostProcess.Services;
@@ -16,25 +17,38 @@ namespace Rille.uTorrent.Extensions.PostProcess
         {
             Logger.Debug("Application starting.");
 
-            _arguments = args;
-            _config = new Config();
-            var fileManager = new FileManager(_config);
-            _torrentManager = new UTorrentManager(_config, fileManager);
+            Initialize(args);
 
-            VerifyConfig(_config);
+            ValidateConfig(_config);
 
             if (ShouldProcessAllTorrents())
                 ProcessAllTorrents();
 
             if (ShouldProcessOneTorrent())
-                ProcessOneTorrent(new Torrent(_arguments[0]));
-            
-
+                ProcessOneTorrent();
         }
 
-        private static void VerifyConfig(Config config)
+        private static void Initialize(string[] args)
         {
+            _arguments = args;
+            _config = new Config();
+            var fileManager = new FileManager(_config);
+            _torrentManager = new UTorrentManager(_config, fileManager);
+        }
+
+        private static void ValidateConfig(Config config)
+        {
+            var result = new ConfigValidator().Validate(config);
             
+            if (result.IsValid)
+            {
+                Logger.Debug("Config is valid.");
+            }
+            else
+            {
+                var errors = string.Join("\n", result.Errors.Select(p => p.PropertyName + ": " + p.ErrorMessage + " Value: " + p.AttemptedValue));
+                throw new InvalidProgramException("Invalid configuration!\n\n" + errors);
+            }
         }
 
         private static bool ShouldProcessAllTorrents()
@@ -44,7 +58,7 @@ namespace Rille.uTorrent.Extensions.PostProcess
 
         private static void ProcessAllTorrents()
         {
-
+            // TODO : Loop ...
         }
 
         private static bool ShouldProcessOneTorrent()
@@ -53,9 +67,9 @@ namespace Rille.uTorrent.Extensions.PostProcess
             return _arguments.Any() && _arguments[0] != "-";
         }
 
-        private static void ProcessOneTorrent(Torrent torrent)
+        private static void ProcessOneTorrent()
         {
-            
+            var torrent = new Torrent(_arguments[0]);
             Logger.Debug($"Torrent hash is: {torrent.Hash}. I will now load all torrents.");
 
             var torrents = _torrentManager.GetTorrentList();
