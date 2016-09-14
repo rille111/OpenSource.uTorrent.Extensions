@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using NLog;
 using Rille.uTorrent.Extensions.PostProcess.Model;
@@ -15,17 +16,26 @@ namespace Rille.uTorrent.Extensions.PostProcess
 
         static void Main(string[] args)
         {
-            Logger.Debug("Application starting.");
+            try
+            {
+                Logger.Debug("Application starting.");
 
-            Initialize(args);
+                Initialize(args);
+                ValidateConfig(_config);
 
-            ValidateConfig(_config);
+                if (ShouldProcessAllTorrents())
+                    ProcessAllTorrents();
 
-            if (ShouldProcessAllTorrents())
-                ProcessAllTorrents();
-
-            if (ShouldProcessOneTorrent())
-                ProcessOneTorrent();
+                if (ShouldProcessOneTorrent())
+                    ProcessOneTorrent();
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Unexpected error occurred.", ex);
+                
+                Console.ReadKey();
+                Environment.Exit(1);
+            }
         }
 
         private static void Initialize(string[] args)
@@ -46,8 +56,8 @@ namespace Rille.uTorrent.Extensions.PostProcess
             }
             else
             {
-                var errors = string.Join("\n", result.Errors.Select(p => p.PropertyName + ": " + p.ErrorMessage + " Value: " + p.AttemptedValue));
-                throw new InvalidProgramException("Invalid configuration!\n\n" + errors);
+                 var errors = string.Join("\n", result.Errors.Select(p => p.PropertyName + ": " + p.ErrorMessage + " Value: " + p.AttemptedValue));
+                throw new InvalidProgramException("Invalid configuration!\n" + errors);
             }
         }
 
@@ -93,6 +103,11 @@ namespace Rille.uTorrent.Extensions.PostProcess
             {
                 Logger.Warn($"Torrent has either not been post processed yet, or the goals haven't been reached. Not doing anything.");
             }
+        }
+
+        static void UnhandledExceptionTrapper(object sender, UnhandledExceptionEventArgs e)
+        {
+
         }
     }
 }
