@@ -20,7 +20,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Model
         /// </summary>
         public string ZipSwitches { get; set; } = "x -y -ao";
 
-        public string[] ArchiveFirstFilePatterns { get; set; } = { "*.rar", "*.001", "*.zip" };
+        public string[] ArchiveFirstFilePossibleFileExtensions { get; set; } = { "*.rar", "*.001", "*.zip", "*.7z"};
 
         /// <summary>
         /// ie: http://localhost:8080
@@ -39,7 +39,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Model
             RuleFor(p => p.ApiLogin).NotEmpty();
             RuleFor(p => p.ApiPassword).NotEmpty();
             RuleFor(p => p.ApiUrl).NotEmpty();
-            RuleFor(p => p.ArchiveFirstFilePatterns).NotEmpty();
+            RuleFor(p => p.ArchiveFirstFilePossibleFileExtensions).NotEmpty();
             RuleFor(p => p.UnpackedFolder).NotEmpty();
             RuleFor(p => p.ZipExeFullpath).NotEmpty();
             RuleFor(p => p.ZipSwitches).NotEmpty();
@@ -69,8 +69,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Model
 
         private bool BeValidUri(string arg)
         {
-            Uri outUri;
-            return System.Uri.TryCreate(arg, UriKind.Absolute, out outUri);
+            return Uri.TryCreate(arg, UriKind.Absolute, out Uri outUri);
         }
     }
 }

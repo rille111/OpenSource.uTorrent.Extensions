@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Linq;
 using NLog;
 using Rille.uTorrent.Extensions.PostProcess.Model;
@@ -20,7 +19,7 @@ namespace Rille.uTorrent.Extensions.PostProcess
             {
                 Logger.Debug("Application starting.");
 
-                Initialize(args);
+                _config = ReadConfiguration(args);
                 ValidateConfig(_config);
 
                 if (ShouldProcessAllTorrents())
@@ -31,19 +30,20 @@ namespace Rille.uTorrent.Extensions.PostProcess
             }
             catch (Exception ex)
             {
-                Logger.Error("Unexpected error occurred.", ex);
+                Logger.Error(ex, "Unexpected error occurred.");
                 
                 Console.ReadKey();
                 Environment.Exit(1);
             }
         }
 
-        private static void Initialize(string[] args)
+        private static Config ReadConfiguration(string[] args)
         {
             _arguments = args;
             _config = new Config();
             var fileManager = new FileManager(_config);
             _torrentManager = new UTorrentManager(_config, fileManager);
+            return _config;
         }
 
         private static void ValidateConfig(Config config)
