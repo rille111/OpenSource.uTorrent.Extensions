@@ -27,8 +27,8 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
         public UTorrentManager(Config config)
         {
             _config = config;
-            _restClient = new RestClient(_config.ApiUrl);
-            _restClient.Authenticator = new HttpBasicAuthenticator(_config.ApiLogin, _config.ApiPassword);
+            _restClient = new RestClient(_config.TorrentWebApiUrl);
+            _restClient.Authenticator = new HttpBasicAuthenticator(_config.TorrentWebApiLogin, _config.TorrentWebApiPassword);
         }
 
         public UTorrentManager(Config config, FileManager fileManager) : this(config)
@@ -46,7 +46,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
             var torrentsJArray = (JArray) json.torrents;
             foreach (var jToken in torrentsJArray)
             {
-                var torrent = new Torrent(jToken[0].ToString());
+                var torrent = new Torrent(jToken[0].ToString(), _config);
                 torrent.NumericStatus = (int) jToken[1];
                 torrent.Name = jToken[2].ToString();
                 torrent.Path = jToken[26].ToString();
@@ -59,17 +59,17 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
 
         public void DeleteTorrent(Torrent torrent)
         {
-            
+            throw new System.NotImplementedException();
         }
 
-        public bool TorrentHasBeenPostProcessed(Torrent torrent)
+        public bool HasTorrentBeenPostProcessed(Torrent torrent)
         {
-            return true;
+            throw new System.NotImplementedException();
         }
 
-        public bool TorrentGoalsReached(Torrent torrent)
+        public bool HasTorrentGoalsBeenReached(Torrent torrent)
         {
-            return true;
+            throw new System.NotImplementedException();
         }
     }
 

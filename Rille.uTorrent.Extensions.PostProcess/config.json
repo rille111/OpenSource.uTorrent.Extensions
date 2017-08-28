@@ -1,0 +1,48 @@
+﻿{
+  // Operating mode.
+  // WorkWithTorrentApi : Uses the torrent api to investigate finished and folders/files not yet unpacked
+  // UnpackTorrentsFolderOnly : Skips the torrent integration entirely, only iterating thru the torrents folder unpacking everything
+  "OperatingMode": "UnpackTorrentsFolderOnly",
+
+  // Exits after these many torrents
+  "MaxProcessTorrentsInBatch":  "1",
+
+  // Dangerous! Will do what it says. Should be used in combination with "OperatingMode": "UnpackTorrentsFolderOnly" !
+  "DeleteFromTorrentsFolderWhenUnpacked": false,
+
+  // Supported archives
+  "ArchiveFirstFilePossibleFileExtensions": [ "rar", "zip", "7z", "001" ], // Must be lowercase!
+
+  // Regex: Determine is Archive using the following patterns (match against files). File extensions will always be converted to lower case so no need to respect that here.
+  "IsArchivePatterns": [
+    "([0-9][0-9][0-9])", // ex: .001, .999
+    "([rs][0-9][0-9])", // ex: .r01, .s99
+    "(rar)", // ex: .rar
+    "(zip)", // ex: .zip
+    "(7z)" // ex: .7z
+  ],
+
+  // Folders
+  "FinalFolder": "c:\\_unpacked\\",
+  "DownloadedTorrentsFolder": "c:\\_downloadfinished\\",
+
+  // Unpacking options
+
+  // Unpack command, supported parameters are:
+  // [UnpackerExeFileFullPath] as configured per below
+  // [TorrentName] the torrent name as it is
+  "UnpackerExeFileFullPath": "c:\\programs\\7z\\7z.exe",
+
+  // Parameters to the unpacked. Supported params are:
+  "UnpackerParameters": "x [Archive] -o[DestinationFolder] -aoa -y", // For 7z, the switches means: -o[destination] -aoa Overwrite all -y assume yes on all queries
+
+  // When itering torrents, how to decide if unpack and continue
+  // TorrentHasLabelProcessed : If there is a label "processed", do nothing and move on
+  // FolderExists : If the folder exists, do nothing and move on
+  //"UnpackerDecideIfProcessed": "FolderExists",
+
+  // Web must be activated without security. (security not yet supported)
+  "TorrentWebApiUrl": "http://7.150.174.30:8080/",
+  "TorrentWebApiLogin": "admin",
+  "TorrentWebApiPassword": "sczeczde117*"
+}

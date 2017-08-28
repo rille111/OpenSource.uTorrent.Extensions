@@ -78,13 +78,18 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Model\Torrent.cs" />
+    <Compile Include="Services\FolderBasedTorrentManager.cs" />
     <Compile Include="Services\ITorrentManager.cs" />
+    <Compile Include="Services\JsonConfigFileReader.cs" />
     <Compile Include="Services\NoopTorrentManager.cs" />
     <Compile Include="Services\Unpacker.cs" />
     <Compile Include="Services\UTorrentManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <Content Include="config.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
