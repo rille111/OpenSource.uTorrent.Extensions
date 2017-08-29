@@ -10,7 +10,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Model
         public OperatingMode OperatingMode { get; set; }
         public int MaxProcessTorrentsInBatch { get; set; }
         public bool DeleteFromTorrentsFolderWhenUnpacked { get; set; }
-        //public UnpackerDecideIfProcessed UnpackerDecideIfProcessed { get; set; }
+        public bool DeleteAlreadyProcessedTorrents { get; set; }
         public string FinalFolder { get; set; }
         public string UnpackerExeFileFullPath { get; set; }
         public string UnpackerParameters { get; set; }
@@ -33,6 +33,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Model
             _config.OperatingMode = jReader.GetValue<OperatingMode>(nameof(_config.OperatingMode));
             _config.MaxProcessTorrentsInBatch = jReader.GetValue<int>(nameof(_config.MaxProcessTorrentsInBatch));
             _config.DeleteFromTorrentsFolderWhenUnpacked = jReader.GetValue<bool>(nameof(_config.DeleteFromTorrentsFolderWhenUnpacked));
+            _config.DeleteAlreadyProcessedTorrents= jReader.GetValue<bool>(nameof(_config.DeleteAlreadyProcessedTorrents));
             //_config.UnpackerDecideIfProcessed = jReader.GetValue<UnpackerDecideIfProcessed>(nameof(_config.UnpackerDecideIfProcessed));
             _config.FinalFolder = jReader.GetValue<string>(nameof(_config.FinalFolder));
             _config.DownloadedTorrentsFolder = jReader.GetValue<string>(nameof(_config.DownloadedTorrentsFolder));

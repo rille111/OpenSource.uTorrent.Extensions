@@ -21,25 +21,13 @@ namespace Rille.uTorrent.Extensions.PostProcess
                 var processedTorrentsCount = 0;
                 _logger.Info("Application starting.");
                 _config = Config.Create();
-
                 ValidateConfig(_config);
-
                 _fileManager = new FileManager(_config);
                 var unpacker = new Unpacker(_config, _fileManager);
                 if (_config.OperatingMode == OperatingMode.UnpackTorrentsFolderOnly)
                     _torrentManager = new FolderBasedTorrentManager(_config, _fileManager);
                 else
                     _torrentManager = new UTorrentManager(_config);
-
-                //var fakeTorrent = new Torrent("123", _config);
-                //// Folder Torrent
-                //fakeTorrent.Path = $"{_config.DownloadedTorrentsFolder}\\SomeTorrent\\".Replace(@"\\", @"\");
-                //fakeTorrent.Name = "SomeTorrent";
-                //unpacker.Unpack(fakeTorrent);
-
-                //// Single Archive Torrent
-                //fakeTorrent.Path = $"{_config.DownloadedTorrentsFolder}\\AnotherTorrent.Rar".Replace(@"\\", @"\");
-                //fakeTorrent.Name = "AnotherTorrent-DIVX";
 
                 var torrents = _torrentManager.GetTorrentList();
 
@@ -55,30 +43,53 @@ namespace Rille.uTorrent.Extensions.PostProcess
 
                     if (_torrentManager.HasTorrentBeenPostProcessed(torrent))
                     {
+                        // Torrent has already been processed.
                         _logger.Info($"- Torrent has already been processed!");
+
+                        // So why is it here? Leftover from a crash? We must make sure.
+                        var unpackedOk = unpacker.UnpackAndCopy(torrent);
+                        if (unpackedOk)
+                        {
+                            if (_config.DeleteAlreadyProcessedTorrents)
+                            {
+                                // Delete already processed torrents was true, so delete it.
+                                _torrentManager.DeleteTorrent(torrent);
+                                continue;
+                            }
+                        }
                     }
                     else
                     {
                         if (processedTorrentsCount >= _config.MaxProcessTorrentsInBatch)
                         {
+                            // Enough in this  batch. Exit.
                             _logger.Info($"- Processed {processedTorrentsCount} in this batch which was the configured max, exiting..");
                             WaitAndExit();
                         }
+
+                        // Otherwise, lets unpack/process!
                         processedTorrentsCount++;
 
                         var unpackedOk = unpacker.UnpackAndCopy(torrent);
                         if (unpackedOk)
+                        {
                             _logger.Info($"- Torrent unpacked OK.");
+                            //TODO: Mark as processed
+
+                            if (_torrentManager.HasTorrentGoalsBeenReached(torrent))
+                            {
+                                // Delete if goals reached and torrent processed ok?
+                                if (_config.DeleteFromTorrentsFolderWhenUnpacked)
+                                    _torrentManager.DeleteTorrent(torrent);
+                            }
+
+                        }
                         else
                         {
+                            // Unpack error!! Quit!
                             _logger.Error($"- Failed to unpack!!");
-                            continue;
+                            WaitAndExit();
                         }
-                    }
-
-                    if (_torrentManager.HasTorrentGoalsBeenReached(torrent))
-                    {
-                        _torrentManager.DeleteTorrent(torrent);
                     }
                 }
                 _logger.Info($"FINISHED");
@@ -106,14 +117,14 @@ namespace Rille.uTorrent.Extensions.PostProcess
         private static void ValidateConfig(Config config)
         {
             var result = new ConfigValidator().Validate(config);
-            
+
             if (result.IsValid)
             {
                 _logger.Info("Config is valid.");
             }
             else
             {
-                 var errors = string.Join("\n", result.Errors.Select(p => p.PropertyName + ": " + p.ErrorMessage + " Value: " + p.AttemptedValue));
+                var errors = string.Join("\n", result.Errors.Select(p => p.PropertyName + ": " + p.ErrorMessage + " Value: " + p.AttemptedValue));
                 throw new InvalidProgramException("Invalid configuration!\n" + errors);
             }
         }

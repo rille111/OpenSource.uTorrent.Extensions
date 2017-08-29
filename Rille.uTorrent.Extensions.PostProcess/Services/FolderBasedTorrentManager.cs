@@ -20,20 +20,17 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
 
         public void DeleteTorrent(Torrent torrent)
         {
-            if (_config.DeleteFromTorrentsFolderWhenUnpacked)
-            {
-                _logger.Info("Deleting: " + torrent.Path);
+            _logger.Info("- Deleting: " + torrent.Path);
 
-                if (torrent.IsFolder)
-                {
-                    var targetDir = new DirectoryInfo(torrent.Path);
-                    targetDir.Delete(true);
-                }
-                else
-                {
-                    var targetFile = new FileInfo(torrent.Path);
-                    targetFile.Delete();
-                }
+            if (torrent.IsFolder)
+            {
+                var targetDir = new DirectoryInfo(torrent.Path);
+                targetDir.Delete(true);
+            }
+            else
+            {
+                var targetFile = new FileInfo(torrent.Path);
+                targetFile.Delete();
             }
         }
 
@@ -47,7 +44,8 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
 
             foreach (var item in torrentFolder.EnumerateDirectories())
             {
-                torrents.Add(new Torrent(item.Name, _config) {
+                torrents.Add(new Torrent(item.Name, _config)
+                {
                     Path = item.FullName,
                     Name = item.Name
                 });

@@ -5,10 +5,11 @@
   "OperatingMode": "UnpackTorrentsFolderOnly",
 
   // Exits after these many torrents
-  "MaxProcessTorrentsInBatch":  "1",
+  "MaxProcessTorrentsInBatch": "5",
 
   // Dangerous! Will do what it says. Should be used in combination with "OperatingMode": "UnpackTorrentsFolderOnly" !
   "DeleteFromTorrentsFolderWhenUnpacked": false,
+  "DeleteAlreadyProcessedTorrents": true,
 
   // Supported archives
   "ArchiveFirstFilePossibleFileExtensions": [ "rar", "zip", "7z", "001" ], // Must be lowercase!
@@ -23,8 +24,11 @@
   ],
 
   // Folders
-  "FinalFolder": "c:\\_unpacked\\",
-  "DownloadedTorrentsFolder": "c:\\_downloadfinished\\",
+  //"FinalFolder": "c:\\_unpacked\\",
+  //"DownloadedTorrentsFolder": "c:\\_downloadfinished\\",
+  "FinalFolder": "Z:\\torrents2\\unpacked\\",
+  "DownloadedTorrentsFolder": "Z:\\torrents2\\finished\\",
+
 
   // Unpacking options
 
@@ -34,7 +38,7 @@
   "UnpackerExeFileFullPath": "c:\\programs\\7z\\7z.exe",
 
   // Parameters to the unpacked. Supported params are:
-  "UnpackerParameters": "x [Archive] -o[DestinationFolder] -aoa -y", // For 7z, the switches means: -o[destination] -aoa Overwrite all -y assume yes on all queries
+  "UnpackerParameters": "x [Archive] -o[DestinationFolder] -aos -y", // For 7z, the switches means: -o[destination] -aoa Overwrite all -y assume yes on all queries
 
   // When itering torrents, how to decide if unpack and continue
   // TorrentHasLabelProcessed : If there is a label "processed", do nothing and move on

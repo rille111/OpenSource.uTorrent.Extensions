@@ -42,7 +42,8 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
 
                 foreach (var file in files)
                 {
-                    File.Copy(file.FullName, $"{torrent.DestinationFolder}\\{file.Name}");
+                    if (!File.Exists($"{torrent.DestinationFolder}\\{file.Name}"))
+                        File.Copy(file.FullName, $"{torrent.DestinationFolder}\\{file.Name}");
                 }
                 foreach (var subfolder in subFolders)
                 {
@@ -96,7 +97,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
                 };
                 process.ErrorDataReceived += (sender, args) =>
                 {
-                    if (!string.IsNullOrEmpty(args.Data))
+                    if (string.IsNullOrEmpty(args?.Data?.Trim().Trim('.')))
                         _logger.Warn(args.Data);
                 };
 
@@ -141,14 +142,14 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
 
             foreach (FileInfo file in files)
             {
-                string tempPath = System.IO.Path.Combine(destDirName, file.Name);
+                string targetPath = System.IO.Path.Combine(destDirName, file.Name);
 
-                if (File.Exists(tempPath))
-                {
-                    File.Delete(tempPath);
-                }
+                //if (File.Exists(targetPath))
+                //{
+                //    File.Delete(targetPath);
+                //}
 
-                file.CopyTo(tempPath, false);
+                file.CopyTo(targetPath, false);
             }
             // If copying subdirectories, copy them and their contents to new location using recursive  function. 
             if (isCopySubDirs)
