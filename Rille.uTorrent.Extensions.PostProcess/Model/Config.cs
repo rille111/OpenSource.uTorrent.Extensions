@@ -14,9 +14,13 @@ namespace Rille.uTorrent.Extensions.PostProcess.Model
         public string FinalFolder { get; set; }
         public string UnpackerExeFileFullPath { get; set; }
         public string UnpackerParameters { get; set; }
+        public bool UnpackerHideWindow { get; set; }
         public IEnumerable<string> ArchiveFirstFilePossibleFileExtensions { get; set; }
         public IEnumerable<string> IsArchivePatterns { get; set; }
-        
+        public string[] IgnoreFileExtensionPatterns { get; private set; }
+        public string[] IgnoreFileNamePatterns { get; private set; }
+        public string[] IgnoreFolderPatterns { get; private set; }
+
         /// <summary>
         /// ie: http://localhost:8080
         /// </summary>
@@ -25,25 +29,34 @@ namespace Rille.uTorrent.Extensions.PostProcess.Model
         public string TorrentWebApiPassword { get; set; }
         public string DownloadedTorrentsFolder { get; internal set; }
 
-
         public static Config Create()
         {
             var _config = new Config();
             var jReader = new JsonConfigFileReader();
+
             _config.OperatingMode = jReader.GetValue<OperatingMode>(nameof(_config.OperatingMode));
             _config.MaxProcessTorrentsInBatch = jReader.GetValue<int>(nameof(_config.MaxProcessTorrentsInBatch));
             _config.DeleteFromTorrentsFolderWhenUnpacked = jReader.GetValue<bool>(nameof(_config.DeleteFromTorrentsFolderWhenUnpacked));
             _config.DeleteAlreadyProcessedTorrents= jReader.GetValue<bool>(nameof(_config.DeleteAlreadyProcessedTorrents));
-            //_config.UnpackerDecideIfProcessed = jReader.GetValue<UnpackerDecideIfProcessed>(nameof(_config.UnpackerDecideIfProcessed));
+
             _config.FinalFolder = jReader.GetValue<string>(nameof(_config.FinalFolder));
             _config.DownloadedTorrentsFolder = jReader.GetValue<string>(nameof(_config.DownloadedTorrentsFolder));
+
             _config.UnpackerParameters = jReader.GetValue<string>(nameof(_config.UnpackerParameters));
             _config.UnpackerExeFileFullPath = jReader.GetValue<string>(nameof(_config.UnpackerExeFileFullPath));
+            _config.UnpackerHideWindow = jReader.GetValue<bool>(nameof(_config.UnpackerHideWindow));
+
+            _config.ArchiveFirstFilePossibleFileExtensions = jReader.GetValue<string[]>(nameof(_config.ArchiveFirstFilePossibleFileExtensions));
+            _config.IsArchivePatterns = jReader.GetValue<string[]>(nameof(_config.IsArchivePatterns));
+
             _config.TorrentWebApiUrl = jReader.GetValue<string>(nameof(_config.TorrentWebApiUrl));
             _config.TorrentWebApiLogin = jReader.GetValue<string>(nameof(_config.TorrentWebApiLogin));
             _config.TorrentWebApiPassword = jReader.GetValue<string>(nameof(_config.TorrentWebApiPassword));
-            _config.ArchiveFirstFilePossibleFileExtensions = jReader.GetValue<string[]>(nameof(_config.ArchiveFirstFilePossibleFileExtensions));
-            _config.IsArchivePatterns = jReader.GetValue<string[]>(nameof(_config.IsArchivePatterns));
+
+
+            _config.IgnoreFileExtensionPatterns = jReader.GetValue<string[]>(nameof(_config.IgnoreFileExtensionPatterns));
+            _config.IgnoreFileNamePatterns = jReader.GetValue<string[]>(nameof(_config.IgnoreFileNamePatterns));
+            _config.IgnoreFolderPatterns = jReader.GetValue<string[]>(nameof(_config.IgnoreFolderPatterns));
 
             return _config;
         }

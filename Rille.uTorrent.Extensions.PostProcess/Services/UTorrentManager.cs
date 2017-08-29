@@ -71,6 +71,21 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
         {
             throw new System.NotImplementedException();
         }
+
+        public void MarkTorrentAsProcessing(Torrent torrent)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void MarkTorrentAsProcessFinished(Torrent torrent)
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void MarkTorrentAsProcessFailed(Torrent torrent)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 
 }

@@ -6,91 +6,34 @@ using Rille.uTorrent.Extensions.PostProcess.Services;
 
 namespace Rille.uTorrent.Extensions.PostProcess
 {
+    //TODO: Iterate subfolders and unpack to destination, and then skip those that are archives
+    //TODO: Support Ignore file pattern, like .sfv
     class Program
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
-        private static string[] _arguments;
-        private static Config _config;
+        private static Config _config = Config.Create();
         private static ITorrentManager _torrentManager;
-        private static FileManager _fileManager;
+        private static FileManager _fileManager = new FileManager(_config);
+        private static Unpacker unpacker = new Unpacker(_config, _fileManager);
+        private static int processedTorrentsCount = 0;
 
         static void Main(string[] args)
         {
             try
             {
-                var processedTorrentsCount = 0;
                 _logger.Info("Application starting.");
-                _config = Config.Create();
-                ValidateConfig(_config);
-                _fileManager = new FileManager(_config);
-                var unpacker = new Unpacker(_config, _fileManager);
-                if (_config.OperatingMode == OperatingMode.UnpackTorrentsFolderOnly)
-                    _torrentManager = new FolderBasedTorrentManager(_config, _fileManager);
-                else
-                    _torrentManager = new UTorrentManager(_config);
+
+                ValidateConfig();
+                CreateTorrentManager();
 
                 var torrents = _torrentManager.GetTorrentList();
 
                 _logger.Info($"LOOPING TORRENTS");
                 foreach (var torrent in torrents)
                 {
-                    _logger.Info($"Processing: {torrent.Name} -");
-                    _logger.Debug($"- Path: {torrent.Path}");
-                    _logger.Debug($"- IsFolder: {torrent.IsFolder}");
-                    _logger.Debug($"- IsSingleFileAndArchive: {torrent.IsSingleFileAndArchive}");
-                    _logger.Debug($"- IsSingleFileButNotArchive: {torrent.IsSingleFileButNotArchive}");
-                    _logger.Debug($"- DoesFolderContainAnyArchive: {_fileManager.DoesFolderContainAnyArchive(torrent.Path)}");
-
-                    if (_torrentManager.HasTorrentBeenPostProcessed(torrent))
-                    {
-                        // Torrent has already been processed.
-                        _logger.Info($"- Torrent has already been processed!");
-
-                        // So why is it here? Leftover from a crash? We must make sure.
-                        var unpackedOk = unpacker.UnpackAndCopy(torrent);
-                        if (unpackedOk)
-                        {
-                            if (_config.DeleteAlreadyProcessedTorrents)
-                            {
-                                // Delete already processed torrents was true, so delete it.
-                                _torrentManager.DeleteTorrent(torrent);
-                                continue;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (processedTorrentsCount >= _config.MaxProcessTorrentsInBatch)
-                        {
-                            // Enough in this  batch. Exit.
-                            _logger.Info($"- Processed {processedTorrentsCount} in this batch which was the configured max, exiting..");
-                            WaitAndExit();
-                        }
-
-                        // Otherwise, lets unpack/process!
-                        processedTorrentsCount++;
-
-                        var unpackedOk = unpacker.UnpackAndCopy(torrent);
-                        if (unpackedOk)
-                        {
-                            _logger.Info($"- Torrent unpacked OK.");
-                            //TODO: Mark as processed
-
-                            if (_torrentManager.HasTorrentGoalsBeenReached(torrent))
-                            {
-                                // Delete if goals reached and torrent processed ok?
-                                if (_config.DeleteFromTorrentsFolderWhenUnpacked)
-                                    _torrentManager.DeleteTorrent(torrent);
-                            }
-
-                        }
-                        else
-                        {
-                            // Unpack error!! Quit!
-                            _logger.Error($"- Failed to unpack!!");
-                            WaitAndExit();
-                        }
-                    }
+                    LogStartProcessTorrent(torrent);
+                    HandleAlreadyProcessedTorrent(torrent);
+                    HandleUnprocessedTorrent(torrent);
                 }
                 _logger.Info($"FINISHED");
 
@@ -107,16 +50,83 @@ namespace Rille.uTorrent.Extensions.PostProcess
             WaitAndExit();
         }
 
-        private static void WaitAndExit()
+        private static void HandleUnprocessedTorrent(Torrent torrent)
         {
-            Console.WriteLine("-- Finished, press any key to exit --");
-            Console.ReadKey();
-            Environment.Exit(1);
+            if (!_torrentManager.HasTorrentBeenPostProcessed(torrent))
+            {
+                if (processedTorrentsCount >= _config.MaxProcessTorrentsInBatch)
+                {
+                    // Enough in this batch already. Exit.
+                    _logger.Info($"- Already Processed {processedTorrentsCount} in this batch which was the configured max, exiting..");
+                    WaitAndExit();
+                }
+
+                // Otherwise, lets unpack/process!
+                processedTorrentsCount++;
+
+                // Mark as in progress
+                _torrentManager.MarkTorrentAsProcessing(torrent);
+
+                var unpackedOk = unpacker.CopyAndUnpack(torrent);
+                if (unpackedOk)
+                {
+                    // Mark torrent as finished
+                    _torrentManager.MarkTorrentAsProcessFinished(torrent);
+
+                    _logger.Info($"- Torrent unpacked OK.");
+
+                    if (_torrentManager.HasTorrentBeenPostProcessed(torrent) && _torrentManager.HasTorrentGoalsBeenReached(torrent))
+                    {
+                        // Delete if goals reached and torrent processed ok, if configured as such.
+                        if (_config.DeleteFromTorrentsFolderWhenUnpacked)
+                            _torrentManager.DeleteTorrent(torrent);
+                    }
+                }
+                else
+                {
+                    // Unpack error!! Quit!
+                    _logger.Error($"- Failed to unpack!!");
+                    _torrentManager.MarkTorrentAsProcessFailed(torrent);
+                    WaitAndExit();
+                }
+            }
         }
 
-        private static void ValidateConfig(Config config)
+        private static void HandleAlreadyProcessedTorrent(Torrent torrent)
         {
-            var result = new ConfigValidator().Validate(config);
+            if (_torrentManager.HasTorrentBeenPostProcessed(torrent))
+            {
+                // Torrent has already been processed.
+                _logger.Info($"- Torrent has already been processed!");
+                if (_config.DeleteAlreadyProcessedTorrents)
+                {
+                    // Delete already processed torrents was true, so delete it.
+                    _torrentManager.DeleteTorrent(torrent);
+                }
+            }
+        }
+
+        private static void LogStartProcessTorrent(Torrent torrent)
+        {
+            _logger.Info($"Processing: {torrent.Name} -");
+            _logger.Debug($"- Path: {torrent.Path}");
+            _logger.Debug($"- IsFolder: {torrent.IsFolder}");
+            _logger.Debug($"- IsSingleFileAndArchive: {torrent.IsSingleFileAndArchive}");
+            _logger.Debug($"- IsSingleFileButNotArchive: {torrent.IsSingleFileButNotArchive}");
+            _logger.Debug($"- DoesFolderContainAnyArchive: {_fileManager.DoesFolderContainAnyArchive(torrent.Path)}");
+        }
+
+        private static void CreateTorrentManager()
+        {
+            if (_config.OperatingMode == OperatingMode.UnpackTorrentsFolderOnly)
+                _torrentManager = new FolderBasedTorrentManager(_config, _fileManager);
+            else
+                _torrentManager = new UTorrentManager(_config);
+        }
+
+        private static void ValidateConfig()
+        {
+            var result = new ConfigValidator().Validate(_config);
 
             if (result.IsValid)
             {
@@ -129,25 +139,10 @@ namespace Rille.uTorrent.Extensions.PostProcess
             }
         }
 
-        private static bool ShouldProcessAllTorrents()
-        {
-            return _arguments.Any() && _arguments[0] == "-all";
-        }
-
-        private static void ProcessAllTorrents()
-        {
-            // TODO : Loop ...
-        }
-
-        private static bool ShouldProcessOneTorrent()
-        {
-            // Anything other than - will be interpreted as a Hash.
-            return _arguments.Any() && _arguments[0] != "-";
-        }
-
         private static void ProcessOneTorrent()
         {
-            var torrent = new Torrent(_arguments[0], _config);
+            //TODO: Support argument containing hash!
+            var torrent = new Torrent("....", _config);
             _logger.Info($"Torrent hash is: {torrent.Hash}. I will now load all torrents.");
 
             var torrents = _torrentManager.GetTorrentList();
@@ -177,5 +172,13 @@ namespace Rille.uTorrent.Extensions.PostProcess
         {
 
         }
+
+        private static void WaitAndExit()
+        {
+            Console.WriteLine("-- Finished, press any key to exit --");
+            Console.ReadKey();
+            Environment.Exit(1);
+        }
+
     }
 }

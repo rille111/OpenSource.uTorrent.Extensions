@@ -65,60 +65,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Model
         }
 
         // Methods
-        public List<FileInfo> GetNonArchiveFiles()
-        {
-            var archives = new List<FileInfo>();
-            if (!IsFolder)
-                return archives;
 
-            var allfiles = new DirectoryInfo(Path).EnumerateFiles().ToList();
-            foreach (var file in allfiles)
-            {
-                var ext = file.Extension.ToLower().Substring(1); // remove the dot
-                foreach (var pattern in _config.IsArchivePatterns)
-                {
-                    if (Regex.IsMatch(ext, $"^{pattern}$"))
-                    {
-                        // Is archive or part of.
-                        archives.Add(file);
-                        continue;
-                    }
-                }
-            }
-            
-            var normalFiles = allfiles.Except(archives);
-            return normalFiles.ToList();
-        }
-
-        public List<FileInfo> GetArchiveFiles()
-        {
-            var archives = new List<FileInfo>();
-            if (!IsFolder)
-                return archives;
-
-            var allfiles = new DirectoryInfo(Path).EnumerateFiles().ToList();
-            foreach (var file in allfiles)
-            {
-                var ext = file.Extension.ToLower().Substring(1); // remove the dot
-                foreach (var pattern in _config.IsArchivePatterns)
-                {
-                    if (Regex.IsMatch(ext, $"^{pattern}$"))
-                    {
-                        // Is archive or part of.
-                        archives.Add(file);
-                        continue;
-                    }
-                }
-            }
-
-            return archives.Distinct().ToList();
-        }
-
-        public List<DirectoryInfo> GetSubfolders()
-        {
-            var subdirs = new DirectoryInfo(Path).EnumerateDirectories().ToList();
-            return subdirs;
-        }
     }
 
     public enum TorrentStatus

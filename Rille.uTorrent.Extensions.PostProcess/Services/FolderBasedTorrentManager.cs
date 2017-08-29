@@ -24,8 +24,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
 
             if (torrent.IsFolder)
             {
-                var targetDir = new DirectoryInfo(torrent.Path);
-                targetDir.Delete(true);
+                _fileManager.DeleteDirectoryRecurse(torrent.Path);
             }
             else
             {
@@ -67,12 +66,71 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
         public bool HasTorrentBeenPostProcessed(Torrent torrent)
         {
             var targetDir = new DirectoryInfo(torrent.DestinationFolder);
-            return targetDir.Exists;
+            if (targetDir.Exists)
+            {
+                if (File.Exists(Path.Combine(targetDir.FullName, "processing.now")))
+                {
+                    // It never finished, so it hasnt been successfully finished
+                    return false;
+                }
+                else
+                {
+                    // Destination exists and no in-progress marker file exists, so it is finished!
+                    return true;
+                }
+            }
+            else
+            {
+                // Destination doesnt exist, so it hasnt been processed.
+                return false;
+            }
         }
 
         public bool HasTorrentGoalsBeenReached(Torrent torrent)
         {
             return true;
+        }
+
+        public void MarkTorrentAsProcessing(Torrent torrent)
+        {
+            var targetDir = new DirectoryInfo(torrent.DestinationFolder);
+            if (!targetDir.Exists)
+            {
+                targetDir.Create();
+            }
+            var processingFile = new FileInfo(Path.Combine(targetDir.FullName, "processing.now"));
+            if (!processingFile.Exists)
+            {
+                processingFile.Create().Close();
+                processingFile = null; // RELEASE LOCK!!
+                // It never finished, so it hasnt been successfully finished
+            }
+        }
+
+        public void MarkTorrentAsProcessFinished(Torrent torrent)
+        {
+            var targetDir = new DirectoryInfo(torrent.DestinationFolder);
+            var processingFile = new FileInfo(Path.Combine(targetDir.FullName, "processing.now"));
+
+            if (processingFile.Exists)
+            {
+                processingFile.Delete();
+            }
+        }
+
+        public void MarkTorrentAsProcessFailed(Torrent torrent)
+        {
+            var targetDir = new DirectoryInfo(torrent.DestinationFolder);
+            if (!targetDir.Exists)
+            {
+                return;
+            }
+            // Just leave a remainder file to call for attention ..
+            var failedMarkerFile = new FileInfo(Path.Combine(targetDir.FullName, "processing.fail"));
+            if (!failedMarkerFile.Exists)
+            {
+                failedMarkerFile.Create().Close();
+            }
         }
     }
 }

@@ -3,6 +3,7 @@ using Rille.uTorrent.Extensions.PostProcess.Model;
 using NLog;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 
 namespace Rille.uTorrent.Extensions.PostProcess.Services
 {
@@ -18,7 +19,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
             _fileManager = fileManager;
         }
 
-        public bool UnpackAndCopy(Torrent torrent)
+        public bool CopyAndUnpack(Torrent torrent)
         {
             if (torrent.IsSingleFileButNotArchive)
             {
@@ -32,22 +33,33 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
 
             if (torrent.IsFolder)
             {
-                // First copy the non-archive files here:
+                // First copy the non-archive files! in torrent folder
                 _logger.Info($" - Copying non-archive files in folder.");
 
-                var files = torrent.GetNonArchiveFiles();
-                var subFolders = torrent.GetSubfolders();
                 if (!Directory.Exists(torrent.DestinationFolder))
                     Directory.CreateDirectory(torrent.DestinationFolder);
 
-                foreach (var file in files)
+                var filesToIgnore = _fileManager.GetIgnoredFiles(torrent.Path).ToList();
+                var filesToCopy = _fileManager
+                    .GetAllFilesNotPartOfArchiveVolume(torrent.Path).ToList()
+                    .RemoveFromList(filesToIgnore);
+
+                var subFolderToIgnore = _fileManager.GetIgnoredFolders(torrent.Path);
+                var subFolders = new DirectoryInfo(torrent.Path)
+                    .EnumerateDirectories().ToList()
+                    .RemoveFromList(subFolderToIgnore);
+
+                foreach (var file in filesToCopy)
                 {
+                    // Skips existing
                     if (!File.Exists($"{torrent.DestinationFolder}\\{file.Name}"))
                         File.Copy(file.FullName, $"{torrent.DestinationFolder}\\{file.Name}");
                 }
+
+
                 foreach (var subfolder in subFolders)
                 {
-                    Unpacker.DirectoryCopy(subfolder.FullName, $"{torrent.DestinationFolder}\\{subfolder.Name}", true);
+                    _fileManager.CopyFolderRecursivelyExceptIgnoredStuffAndArchiveFirstFiles(subfolder.FullName, $"{torrent.DestinationFolder}\\{subfolder.Name}", true);
                 }
             }
 
@@ -74,19 +86,30 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
             // We're working with either a folder or a single file archive.
             var exitCode = 0;
 
-            foreach (var item in _fileManager.GetFolderArchivesFirstFile(torrent.Path))
+            var allArchivesFirstFile = _fileManager.GetAllFirstFileArchivesRecursive(torrent.Path);
+
+            foreach (var fileFirstInArchive in allArchivesFirstFile)
             {
+                var torrentFolderName = torrent.Path;
+                // Get only the subfolder path (not the entire path) so that we know where to copy to (a new folder in the destination)
+                var sourceFileSubFolder = fileFirstInArchive.DirectoryName
+                    .Replace(torrentFolderName, string.Empty)
+                    .Trim('\\')
+                    ;
+                var destinationFolder = Path.Combine(torrent.DestinationFolder, sourceFileSubFolder);
+
                 var unpackCommand = _config.UnpackerParameters
-                    .Replace("[Archive]", $"\"{item.FullName}\"")
-                    .Replace("[DestinationFolder]", $"\"{torrent.DestinationFolder}\"")
+                    .Replace("[Archive]", $"\"{fileFirstInArchive.FullName}\"")
+                    .Replace("[DestinationFolder]", $"\"{destinationFolder}\"")
                     .Replace(@"\\", @"\");
 
                 var startInfo = new ProcessStartInfo(_config.UnpackerExeFileFullPath, unpackCommand);
-                startInfo.CreateNoWindow = true;
-                startInfo.RedirectStandardOutput = true;
-                startInfo.RedirectStandardError = true;
-                startInfo.RedirectStandardInput = true;
-                startInfo.UseShellExecute = false;
+
+                startInfo.CreateNoWindow = _config.UnpackerHideWindow;
+                startInfo.RedirectStandardOutput = _config.UnpackerHideWindow;
+                startInfo.RedirectStandardError = _config.UnpackerHideWindow;
+                startInfo.RedirectStandardInput = _config.UnpackerHideWindow;
+                startInfo.UseShellExecute = !_config.UnpackerHideWindow;
 
                 var process = new Process();
                 process.StartInfo = startInfo;
@@ -104,62 +127,16 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
                 _logger.Debug($" - Starting process: {_config.UnpackerExeFileFullPath} {unpackCommand}");
 
                 process.Start();
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
+                if (_config.UnpackerHideWindow)
+                {
+                    process.BeginOutputReadLine();
+                    process.BeginErrorReadLine();
+
+                }
                 process.WaitForExit();
                 exitCode += process.ExitCode;
             }
             return exitCode;
-        }
-
-        /// <summary>
-        /// Directories the copy.
-        /// </summary>
-        /// <param name="sourceDirPath">The source dir path.</param>
-        /// <param name="destDirName">Name of the destination dir.</param>
-        /// <param name="isCopySubDirs">if set to <c>true</c> [is copy sub directories].</param>
-        /// <returns></returns>
-        public static void DirectoryCopy(string sourceDirPath, string destDirName, bool isCopySubDirs)
-        {
-            // Get the subdirectories for the specified directory.
-            DirectoryInfo directoryInfo = new DirectoryInfo(sourceDirPath);
-            DirectoryInfo[] directories = directoryInfo.GetDirectories();
-            if (!directoryInfo.Exists)
-            {
-                throw new DirectoryNotFoundException("Source directory does not exist or could not be found: "
-                    + sourceDirPath);
-            }
-            DirectoryInfo parentDirectory = Directory.GetParent(directoryInfo.FullName);
-            destDirName = System.IO.Path.Combine(parentDirectory.FullName, destDirName);
-
-            // If the destination directory doesn't exist, create it. 
-            if (!Directory.Exists(destDirName))
-            {
-                Directory.CreateDirectory(destDirName);
-            }
-            // Get the files in the directory and copy them to the new location.
-            FileInfo[] files = directoryInfo.GetFiles();
-
-            foreach (FileInfo file in files)
-            {
-                string targetPath = System.IO.Path.Combine(destDirName, file.Name);
-
-                //if (File.Exists(targetPath))
-                //{
-                //    File.Delete(targetPath);
-                //}
-
-                file.CopyTo(targetPath, false);
-            }
-            // If copying subdirectories, copy them and their contents to new location using recursive  function. 
-            if (isCopySubDirs)
-            {
-                foreach (DirectoryInfo item in directories)
-                {
-                    string tempPath = System.IO.Path.Combine(destDirName, item.Name);
-                    DirectoryCopy(item.FullName, tempPath, isCopySubDirs);
-                }
-            }
         }
     }
 }

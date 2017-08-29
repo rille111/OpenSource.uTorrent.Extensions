@@ -1,49 +1,62 @@
 ﻿{
-  // Operating mode.
-  // WorkWithTorrentApi : Uses the torrent api to investigate finished and folders/files not yet unpacked
-  // UnpackTorrentsFolderOnly : Skips the torrent integration entirely, only iterating thru the torrents folder unpacking everything
+  // TODO: Integrate with BitTorrent! I only have a beginning, so far.
+  // TODO: Mutex, to stop multiple instances of the program!
+  // TODO: Use the security thing that BitTorrent has.
+
+  // Operating mode
+  // WorkWithTorrentApi : Uses the torrent web api to to work with torrents, using labels to set working status.
+  // UnpackTorrentsFolderOnly : Skips the torrent integration entirely, only iterating thru the DownloadedTorrentsFolder unpacking everything, using marker files for progress.
   "OperatingMode": "UnpackTorrentsFolderOnly",
 
   // Exits after these many torrents
-  "MaxProcessTorrentsInBatch": "5",
-
-  // Dangerous! Will do what it says. Should be used in combination with "OperatingMode": "UnpackTorrentsFolderOnly" !
-  "DeleteFromTorrentsFolderWhenUnpacked": false,
-  "DeleteAlreadyProcessedTorrents": true,
-
-  // Supported archives
-  "ArchiveFirstFilePossibleFileExtensions": [ "rar", "zip", "7z", "001" ], // Must be lowercase!
-
-  // Regex: Determine is Archive using the following patterns (match against files). File extensions will always be converted to lower case so no need to respect that here.
-  "IsArchivePatterns": [
-    "([0-9][0-9][0-9])", // ex: .001, .999
-    "([rs][0-9][0-9])", // ex: .r01, .s99
-    "(rar)", // ex: .rar
-    "(zip)", // ex: .zip
-    "(7z)" // ex: .7z
-  ],
+  "MaxProcessTorrentsInBatch": "99",
 
   // Folders
-  //"FinalFolder": "c:\\_unpacked\\",
-  //"DownloadedTorrentsFolder": "c:\\_downloadfinished\\",
   "FinalFolder": "Z:\\torrents2\\unpacked\\",
   "DownloadedTorrentsFolder": "Z:\\torrents2\\finished\\",
 
+  // Delete strategies
+  "DeleteFromTorrentsFolderWhenUnpacked": false, // Deletes instantly, when processing is complete
+  "DeleteAlreadyProcessedTorrents": true, // Deletes only the next run of the program. Safety mechanism if you wanna verify that processing worked as expected.
 
-  // Unpacking options
+  // Supported archives (possible file-extension of the first file of an archive multivolume). Keep lowercase!
+  "ArchiveFirstFilePossibleFileExtensions": [ "rar", "zip", "7z" ], // Must be lowercase!
 
-  // Unpack command, supported parameters are:
-  // [UnpackerExeFileFullPath] as configured per below
-  // [TorrentName] the torrent name as it is
+  // Regex: Determine if file is part of an archive volume, using the following patterns. Keep lowercase!
+  // Will only be used in the parent folder of the torrent to decide which files to copy or not
+  "IsArchivePatterns": [
+    "^([0-9][0-9][0-9])$", // ex: .001, .999
+    "^([rs][0-9][0-9])$", // ex: .r01, .s99
+    "^(rar)$", // ex: .rar
+    "^(zip)$", // ex: .zip
+    "^(7z)$" // ex: .7z
+  ],
+
+  // Ignore patterns (keep lower case! This is .NET regex, which means that some stuff dont work.(
+
+  "IgnoreFileExtensionPatterns": [
+    "^(sfv)$",
+    "^(diz)$",
+    "^(torrent)$"
+  ],
+  "IgnoreFileNamePatterns": [
+    "(torrent downloaded)",
+    "(uTorrentPartFile)"
+  ],
+  "IgnoreFolderPatterns": [
+    "^(sample)$",
+    "^(proof)$"
+  ],
+
+  // Unpacking
+
+  // The actual extractor (7z is safest, not tested anything else)
   "UnpackerExeFileFullPath": "c:\\programs\\7z\\7z.exe",
-
-  // Parameters to the unpacked. Supported params are:
-  "UnpackerParameters": "x [Archive] -o[DestinationFolder] -aos -y", // For 7z, the switches means: -o[destination] -aoa Overwrite all -y assume yes on all queries
-
-  // When itering torrents, how to decide if unpack and continue
-  // TorrentHasLabelProcessed : If there is a label "processed", do nothing and move on
-  // FolderExists : If the folder exists, do nothing and move on
-  //"UnpackerDecideIfProcessed": "FolderExists",
+  "UnpackerHideWindow": "true", // If false, detailed errors from unpacker wont be logged, but you will have a window where u can observe the unpacking. Good for debugging
+  // Command template. Change only at your own risk! Supported params are:
+  // Archive : full path to the archive first file
+  // DestinationFolder : As it says, archives in sub folders will be extracted to correct subfolder in the destination
+  "UnpackerParameters": "x [Archive] -o[DestinationFolder] -aos -y", // For 7z, the switches means: -o[destination] -aoa Overwrite all, -aos Skip existing, -y Assume yes on all queries
 
   // Web must be activated without security. (security not yet supported)
   "TorrentWebApiUrl": "http://7.150.174.30:8080/",
