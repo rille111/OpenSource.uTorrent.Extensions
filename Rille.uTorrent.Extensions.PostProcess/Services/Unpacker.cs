@@ -34,7 +34,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
             if (torrent.IsFolder)
             {
                 // First copy the non-archive files! in torrent folder
-                _logger.Info($" - Copying non-archive files in folder.");
+                _logger.Info($" - Copying non-archive files in Torrent parent folder.");
 
                 if (!Directory.Exists(torrent.DestinationFolder))
                     Directory.CreateDirectory(torrent.DestinationFolder);
@@ -64,24 +64,24 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
             }
 
             // Unpack!!
-            _logger.Info($" - Unpacking {torrent.Path} to {torrent.DestinationFolder}");
+            _logger.Info($" - Processing sub folders (Unpack archives, copy non-archives) to {torrent.DestinationFolder}");
             
-            var exitCode = StartUnpackingProcess(torrent);
+            var exitCode = ProcessTorrentFoldersAndArchives(torrent);
 
             if (exitCode == 0)
             {
-                _logger.Info($" - Unpacked {torrent.Path} OK!");
+                _logger.Info($" - Process OK!");
                 return true;
             }
             else
             {
-                _logger.Error($" - Error! When unpacking {torrent.Path}. ExitCode from unpacker was: {exitCode}. Investigate log for details, see Warnings.");
+                _logger.Error($" - Error! When processing {torrent.Path}. ExitCode from unpacker was: {exitCode}. Investigate log for details, see Warnings.");
                 Directory.Delete(torrent.DestinationFolder, true);
                 return false;
             }
         }
 
-        private int StartUnpackingProcess(Torrent torrent)
+        private int ProcessTorrentFoldersAndArchives(Torrent torrent)
         {
             // We're working with either a folder or a single file archive.
             var exitCode = 0;

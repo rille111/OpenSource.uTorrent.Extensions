@@ -6,14 +6,14 @@
   // Operating mode
   // WorkWithTorrentApi : Uses the torrent web api to to work with torrents, using labels to set working status.
   // UnpackTorrentsFolderOnly : Skips the torrent integration entirely, only iterating thru the DownloadedTorrentsFolder unpacking everything, using marker files for progress.
-  "OperatingMode": "UnpackTorrentsFolderOnly",
+  "OperatingMode": "WorkWithTorrentApi",
 
   // Exits after these many torrents
   "MaxProcessTorrentsInBatch": "99",
 
   // Folders
-  "FinalFolder": "Z:\\torrents2\\unpacked\\",
-  "DownloadedTorrentsFolder": "Z:\\torrents2\\finished\\",
+  "FinalFolder": "Z:\\torrents\\unpacked\\",
+  "DownloadedTorrentsFolder": "Z:\\torrents\\finished\\",
 
   // Delete strategies
   "DeleteFromTorrentsFolderWhenUnpacked": false, // Deletes instantly, when processing is complete
@@ -59,7 +59,7 @@
   "UnpackerParameters": "x [Archive] -o[DestinationFolder] -aos -y", // For 7z, the switches means: -o[destination] -aoa Overwrite all, -aos Skip existing, -y Assume yes on all queries
 
   // Web must be activated without security. (security not yet supported)
-  "TorrentWebApiUrl": "http://7.150.174.30:8080/",
+  "TorrentWebApiUrl": "http://192.168.0.100:8080/",
   "TorrentWebApiLogin": "admin",
-  "TorrentWebApiPassword": "sczeczde117*"
+  "TorrentWebApiPassword": "admin"
 }

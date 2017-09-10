@@ -73,7 +73,7 @@ namespace Rille.uTorrent.Extensions.PostProcess
                     // Mark torrent as finished
                     _torrentManager.MarkTorrentAsProcessFinished(torrent);
 
-                    _logger.Info($"- Torrent unpacked OK.");
+                    _logger.Info($"- Torrent processing finished.");
 
                     if (_torrentManager.HasTorrentBeenPostProcessed(torrent) && _torrentManager.HasTorrentGoalsBeenReached(torrent))
                     {
@@ -85,7 +85,7 @@ namespace Rille.uTorrent.Extensions.PostProcess
                 else
                 {
                     // Unpack error!! Quit!
-                    _logger.Error($"- Failed to unpack!!");
+                    _logger.Error($"- Failed to process torrent!");
                     _torrentManager.MarkTorrentAsProcessFailed(torrent);
                     WaitAndExit();
                 }

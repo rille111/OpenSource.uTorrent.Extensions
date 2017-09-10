@@ -4,6 +4,7 @@ using NLog;
 using RestSharp;
 using RestSharp.Authenticators;
 using Rille.uTorrent.Extensions.PostProcess.Model;
+using System.Net;
 
 namespace Rille.uTorrent.Extensions.PostProcess.Services
 {
@@ -29,6 +30,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
             _config = config;
             _restClient = new RestClient(_config.TorrentWebApiUrl);
             _restClient.Authenticator = new HttpBasicAuthenticator(_config.TorrentWebApiLogin, _config.TorrentWebApiPassword);
+            //_restClient.Authenticator = new SimpleAuthenticator("username", "admin", "password", "admin");
         }
 
         public UTorrentManager(Config config, FileManager fileManager) : this(config)
@@ -40,17 +42,27 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
         {
             var ret = new List<Torrent>();
             var req = new RestRequest("gui/?list=1");
+
+            
+
             //var resp = _restClient.Get<dynamic>(req);
             var response = _restClient.Execute(req);
+
+            if (response.ResponseStatus != ResponseStatus.Completed || !IsSuccessStatusCode(response.StatusCode))
+                throw new System.Exception($"Invalid response from Torrent WebApi. HttpStatus: {response.StatusCode} {response.StatusDescription}, Http: {response.ResponseStatus.ToString()}");
+
+            if (string.IsNullOrEmpty(response.Content))
+                return new List<Torrent>();
+
             dynamic json = JObject.Parse(response.Content);
-            var torrentsJArray = (JArray) json.torrents;
+            var torrentsJArray = (JArray)json.torrents;
             foreach (var jToken in torrentsJArray)
             {
                 var torrent = new Torrent(jToken[0].ToString(), _config);
-                torrent.NumericStatus = (int) jToken[1];
+                torrent.NumericStatus = (int)jToken[1];
                 torrent.Name = jToken[2].ToString();
                 torrent.Path = jToken[26].ToString();
-                torrent.ActualSeedRatio = (int) jToken[7];
+                torrent.ActualSeedRatio = (int)jToken[7];
                 ret.Add(torrent);
             }
 
@@ -86,6 +98,11 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
         {
             throw new System.NotImplementedException();
         }
-    }
 
+        public bool IsSuccessStatusCode(HttpStatusCode statusCode)
+        {
+            return ((int)statusCode >= 200) && ((int)statusCode <= 299);
+        }
+
+    }
 }
