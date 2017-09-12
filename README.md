@@ -7,6 +7,8 @@ Post processing of Torrents can never be easier. This is a tool that copies & un
 restarting torrents that stopped due to errors, and it deletes torrents when they're unpacked and seeding goal finishes.
 It keeps tracks of torrents using the label, so DONT USE labels for anything else or it wont work.
 
+Use at own risk. 
+
 == Features ==
 
 * Copies non-archives and unpacks archives to a specified folder
@@ -23,6 +25,7 @@ It keeps tracks of torrents using the label, so DONT USE labels for anything els
 * Configure BitTorrent/Utorrent:
 	* Preferences - Advanced - Web UI: Enable it, set login & pass, set port
 	* Prererences - Advanced - Filter on "token" set 'auth' to false and 'auth_filter' to 0
+* Clear all labels for all torrents (this program relies on it!)
 * Call the .exe file manually or
 * Call the .exe file in BitTorrent/UTorrent whenever a torrent changes state
 * Call the .exe every 10 minute, by creating a Task in Task Schedule (use the exported .xml)
