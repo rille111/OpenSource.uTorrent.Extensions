@@ -24,10 +24,12 @@ namespace Rille.uTorrent.Extensions.PostProcess.Model
         /// <summary>
         /// ie: http://localhost:8080
         /// </summary>
-        public string TorrentWebApiUrl { get; set; } 
-        public string TorrentWebApiLogin { get; set; } 
+        public string TorrentWebApiUrl { get; set; }
+        public string TorrentWebApiLogin { get; set; }
         public string TorrentWebApiPassword { get; set; }
         public string DownloadedTorrentsFolder { get; internal set; }
+
+        public IEnumerable<SeedingGoal> SeedingGoals { get; set; }
 
         public static Config Create()
         {
@@ -37,7 +39,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Model
             _config.OperatingMode = jReader.GetValue<OperatingMode>(nameof(_config.OperatingMode));
             _config.MaxProcessTorrentsInBatch = jReader.GetValue<int>(nameof(_config.MaxProcessTorrentsInBatch));
             _config.DeleteFromTorrentsFolderWhenUnpacked = jReader.GetValue<bool>(nameof(_config.DeleteFromTorrentsFolderWhenUnpacked));
-            _config.DeleteAlreadyProcessedTorrents= jReader.GetValue<bool>(nameof(_config.DeleteAlreadyProcessedTorrents));
+            _config.DeleteAlreadyProcessedTorrents = jReader.GetValue<bool>(nameof(_config.DeleteAlreadyProcessedTorrents));
 
             _config.FinalFolder = jReader.GetValue<string>(nameof(_config.FinalFolder));
             _config.DownloadedTorrentsFolder = jReader.GetValue<string>(nameof(_config.DownloadedTorrentsFolder));
@@ -58,6 +60,8 @@ namespace Rille.uTorrent.Extensions.PostProcess.Model
             _config.IgnoreFileNamePatterns = jReader.GetValue<string[]>(nameof(_config.IgnoreFileNamePatterns));
             _config.IgnoreFolderPatterns = jReader.GetValue<string[]>(nameof(_config.IgnoreFolderPatterns));
 
+            _config.SeedingGoals = jReader.GetValue<SeedingGoal[]>(nameof(_config.SeedingGoals));
+
             return _config;
         }
     }
@@ -70,6 +74,12 @@ namespace Rille.uTorrent.Extensions.PostProcess.Model
     public enum UnpackerDecideIfProcessed
     {
         TorrentHasLabelProcessed, FolderExists
+    }
+
+    public class SeedingGoal
+    {
+        public string TrackerRegex { get; set; }
+        public int SeedRatioPercent { get; set; }
     }
 
     public class ConfigValidator : AbstractValidator<Config>
@@ -106,5 +116,13 @@ namespace Rille.uTorrent.Extensions.PostProcess.Model
         {
             return Uri.TryCreate(arg, UriKind.Absolute, out Uri outUri);
         }
+    }
+
+    public enum ProcessingStatus
+    {
+        None,
+        Processing,
+        Processed,
+        ProcessFailed
     }
 }

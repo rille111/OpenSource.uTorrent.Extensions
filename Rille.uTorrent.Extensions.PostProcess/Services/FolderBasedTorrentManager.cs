@@ -46,7 +46,8 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
                 torrents.Add(new Torrent(item.Name, _config)
                 {
                     Path = item.FullName,
-                    Name = item.Name
+                    Name = item.Name,
+                    ProgressPercent = 100,
                 });
             }
 
@@ -54,8 +55,11 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
             {
                 var torr = new Torrent(item.Name, _config)
                 {
-                    Path = item.FullName,
-                    Name = item.Name.Replace(item.Extension, "")
+                    //Path = item.FullName,
+                    Path = torrentFolder.FullName,
+                    FileList = new List<string> { item.Name},
+                    Name = item.Name.Replace(item.Extension, ""),
+                    ProgressPercent = 100,
                 };
                 torrents.Add(torr);
             }
@@ -63,7 +67,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
             return torrents;
         }
 
-        public bool HasTorrentBeenPostProcessed(Torrent torrent)
+        public bool HasTorrentBeenProcessed(Torrent torrent)
         {
             var targetDir = new DirectoryInfo(torrent.DestinationFolder);
             if (targetDir.Exists)
@@ -107,7 +111,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
             }
         }
 
-        public void MarkTorrentAsProcessFinished(Torrent torrent)
+        public void MarkTorrentAsProcessed(Torrent torrent)
         {
             var targetDir = new DirectoryInfo(torrent.DestinationFolder);
             var processingFile = new FileInfo(Path.Combine(targetDir.FullName, "processing.now"));

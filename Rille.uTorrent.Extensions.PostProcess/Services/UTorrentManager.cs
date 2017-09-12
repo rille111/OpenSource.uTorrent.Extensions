@@ -5,6 +5,9 @@ using RestSharp;
 using RestSharp.Authenticators;
 using Rille.uTorrent.Extensions.PostProcess.Model;
 using System.Net;
+using System;
+using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace Rille.uTorrent.Extensions.PostProcess.Services
 {
@@ -43,8 +46,6 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
             var ret = new List<Torrent>();
             var req = new RestRequest("gui/?list=1");
 
-            
-
             //var resp = _restClient.Get<dynamic>(req);
             var response = _restClient.Execute(req);
 
@@ -61,48 +62,141 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
                 var torrent = new Torrent(jToken[0].ToString(), _config);
                 torrent.NumericStatus = (int)jToken[1];
                 torrent.Name = jToken[2].ToString();
+                torrent.ProgressPercent = (int)jToken[4] / 10;
                 torrent.Path = jToken[26].ToString();
-                torrent.ActualSeedRatio = (int)jToken[7];
+                torrent.ActualSeedRatioPercent = (int)jToken[7] / 10;
+                torrent.Label = (string)jToken[11];
+
+                if (torrent.Label == "")
+                    torrent.ProcessingStatus = ProcessingStatus.None;
+                else
+                {
+                    Enum.TryParse(torrent.Label, true, out ProcessingStatus outEnum);
+                    torrent.ProcessingStatus = outEnum;
+                }
+                    
+
+                PopulateTorrentProperties(torrent);
+                PopulateTorrentFileList(torrent);
+                MatchSeedingGoalsWithTracker(torrent);
+
                 ret.Add(torrent);
             }
-
             return ret;
         }
 
         public void DeleteTorrent(Torrent torrent)
         {
-            throw new System.NotImplementedException();
-        }
+            var req = new RestRequest($"gui/?action=removedata&hash={torrent.Hash}");
+            var response = _restClient.Execute(req);
 
-        public bool HasTorrentBeenPostProcessed(Torrent torrent)
-        {
-            throw new System.NotImplementedException();
+            if (response.ResponseStatus != ResponseStatus.Completed || !IsSuccessStatusCode(response.StatusCode))
+                throw new System.Exception($"Invalid response from Torrent WebApi. HttpStatus: {response.StatusCode} {response.StatusDescription}, Http: {response.ResponseStatus.ToString()}");
+
         }
 
         public bool HasTorrentGoalsBeenReached(Torrent torrent)
         {
-            throw new System.NotImplementedException();
+            bool ratioReached = torrent.ActualSeedRatioPercent >= torrent.SeedingGoal.SeedRatioPercent;
+            return ratioReached;
+        }
+
+        public bool HasTorrentBeenProcessed(Torrent torrent)
+        {
+            return torrent.ProcessingStatus == ProcessingStatus.Processed;
         }
 
         public void MarkTorrentAsProcessing(Torrent torrent)
         {
-            throw new System.NotImplementedException();
+            SetLabelOnTorrent(torrent, ProcessingStatus.Processing);
         }
 
-        public void MarkTorrentAsProcessFinished(Torrent torrent)
+        public void MarkTorrentAsProcessed(Torrent torrent)
         {
-            throw new System.NotImplementedException();
+            SetLabelOnTorrent(torrent, ProcessingStatus.Processed);
         }
 
         public void MarkTorrentAsProcessFailed(Torrent torrent)
         {
-            throw new System.NotImplementedException();
+            SetLabelOnTorrent(torrent, ProcessingStatus.ProcessFailed);
         }
 
-        public bool IsSuccessStatusCode(HttpStatusCode statusCode)
+        // Private helpers
+
+        private void PopulateTorrentProperties(Torrent torrent)
+        {
+            var req = new RestRequest("gui/?action=getprops&hash=" + torrent.Hash);
+            var response = _restClient.Execute(req);
+
+            if (response.ResponseStatus != ResponseStatus.Completed || !IsSuccessStatusCode(response.StatusCode))
+                throw new System.Exception($"Invalid response from Torrent WebApi. HttpStatus: {response.StatusCode} {response.StatusDescription}, Http: {response.ResponseStatus.ToString()}");
+
+            if (string.IsNullOrEmpty(response.Content))
+                throw new NullReferenceException("Got no content when asking the api for torrent properties!");
+
+            dynamic json = JObject.Parse(response.Content);
+            var tracker = (string)json.props[0].trackers;
+            torrent.Trackers = tracker;
+
+
+        }
+
+        private void PopulateTorrentFileList(Torrent torrent)
+        {
+            var req = new RestRequest("gui/?action=getfiles&hash=" + torrent.Hash);
+            var response = _restClient.Execute(req);
+
+            if (response.ResponseStatus != ResponseStatus.Completed || !IsSuccessStatusCode(response.StatusCode))
+                throw new System.Exception($"Invalid response from Torrent WebApi. HttpStatus: {response.StatusCode} {response.StatusDescription}, Http: {response.ResponseStatus.ToString()}");
+
+            if (string.IsNullOrEmpty(response.Content))
+                throw new NullReferenceException("Got no content when asking the api for torrent files!");
+
+            dynamic json = JObject.Parse(response.Content);
+            torrent.FileList = new List<string>();
+            var files = (JArray)json.files[1];
+            var fileCount = files.Count;
+
+            foreach (var file in files)
+            {
+                torrent.FileList.Add((string)file[0]);
+            }
+        }
+
+        private void SetLabelOnTorrent(Torrent torrent, ProcessingStatus status)
+        {
+            // gui/?action=setprops&hash=[TORRENT HASH]&s=[PROPERTY]&v=[VALUE]
+            var emptyLabelReq = new RestRequest($"gui/?action=setprops&hash={torrent.Hash}&s=label&v=");
+            var setNewLabelReq = new RestRequest($"gui/?action=setprops&hash={torrent.Hash}&s=label&v={status.ToString()}");
+
+            _restClient.Execute(emptyLabelReq);
+            var response = _restClient.Execute(setNewLabelReq);
+
+            if (response.ResponseStatus != ResponseStatus.Completed || !IsSuccessStatusCode(response.StatusCode))
+                throw new System.Exception($"Invalid response from Torrent WebApi. HttpStatus: {response.StatusCode} {response.StatusDescription}, Http: {response.ResponseStatus.ToString()}");
+
+            torrent.ProcessingStatus = status;
+
+        }
+
+        private void MatchSeedingGoalsWithTracker(Torrent torrent)
+        {
+            foreach (var goal in _config.SeedingGoals)
+            {
+                if (Regex.IsMatch(torrent.Trackers, goal.TrackerRegex))
+                {
+                    torrent.SeedingGoal = goal;
+                    return;
+                }
+            }
+
+            // If no match, goal becomes default
+            torrent.SeedingGoal = _config.SeedingGoals.First(p => p.TrackerRegex == "DEFAULT");
+        }
+
+        private bool IsSuccessStatusCode(HttpStatusCode statusCode)
         {
             return ((int)statusCode >= 200) && ((int)statusCode <= 299);
         }
-
     }
 }

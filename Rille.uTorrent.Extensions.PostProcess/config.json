@@ -1,11 +1,12 @@
 ﻿{
-  // TODO: Integrate with BitTorrent! I only have a beginning, so far.
+  // TODO: Logic for how to handle torrents in error status (skip? start? what if goals are reached?) Begin with handling error-torrents at least.
   // TODO: Mutex, to stop multiple instances of the program!
-  // TODO: Use the security thing that BitTorrent has.
+  // TODO: Document with examples, and release-package
+  // TODO: Test UnpackTorrentsFolderOnly after all fixing
 
   // Operating mode
   // WorkWithTorrentApi : Uses the torrent web api to to work with torrents, using labels to set working status.
-  // UnpackTorrentsFolderOnly : Skips the torrent integration entirely, only iterating thru the DownloadedTorrentsFolder unpacking everything, using marker files for progress.
+  // UnpackTorrentsFolderOnly : (UNTESTED) Skips the torrent integration entirely, only iterating thru the DownloadedTorrentsFolder unpacking everything, using marker files for progress.
   "OperatingMode": "WorkWithTorrentApi",
 
   // Exits after these many torrents
@@ -16,8 +17,8 @@
   "DownloadedTorrentsFolder": "Z:\\torrents\\finished\\",
 
   // Delete strategies
-  "DeleteFromTorrentsFolderWhenUnpacked": false, // Deletes instantly, when processing is complete
-  "DeleteAlreadyProcessedTorrents": true, // Deletes only the next run of the program. Safety mechanism if you wanna verify that processing worked as expected.
+  "DeleteFromTorrentsFolderWhenUnpacked": true, // Deletes instantly, when processing is complete
+  "DeleteAlreadyProcessedTorrents": true, // Deletes only the next run of the program. Safety mechanism if you wanna verify that processing first worked as expected.
 
   // Supported archives (possible file-extension of the first file of an archive multivolume). Keep lowercase!
   "ArchiveFirstFilePossibleFileExtensions": [ "rar", "zip", "7z" ], // Must be lowercase!
@@ -32,7 +33,7 @@
     "^(7z)$" // ex: .7z
   ],
 
-  // Ignore patterns (keep lower case! This is .NET regex, which means that some stuff dont work.(
+  // Ignore patterns when copying files and folders (keep lower case! This is .NET regex, which means that some stuff dont work.(
 
   "IgnoreFileExtensionPatterns": [
     "^(sfv)$",
@@ -45,6 +46,7 @@
   ],
   "IgnoreFolderPatterns": [
     "^(sample)$",
+    "^(screens)$",
     "^(proof)$"
   ],
 
@@ -59,7 +61,22 @@
   "UnpackerParameters": "x [Archive] -o[DestinationFolder] -aos -y", // For 7z, the switches means: -o[destination] -aoa Overwrite all, -aos Skip existing, -y Assume yes on all queries
 
   // Web must be activated without security. (security not yet supported)
-  "TorrentWebApiUrl": "http://192.168.0.100:8080/",
+  "TorrentWebApiUrl": "http://127.0.0.1:8080/",
   "TorrentWebApiLogin": "admin",
-  "TorrentWebApiPassword": "admin"
+  "TorrentWebApiPassword": "admin",
+
+  "SeedingGoals": [
+    {
+      "TrackerRegex": "speed",
+      "SeedRatioPercent": 250
+    },
+    {
+      "TrackerRegex": "leechers", //tpb
+      "SeedRatioPercent": 0
+    },
+    { // DONT REMOVE THE DEFAULT
+      "TrackerRegex": "DEFAULT", // if the loaded trackers contain this string (.net regex!)
+      "SeedRatioPercent": 200
+    }
+  ]
 }
