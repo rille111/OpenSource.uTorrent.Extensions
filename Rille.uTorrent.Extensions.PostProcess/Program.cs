@@ -17,6 +17,10 @@ namespace Rille.uTorrent.Extensions.PostProcess
         private static int processedTorrentsCount = 0;
         static Mutex mutex = new Mutex(false, "https://github.com/rille111/Rille.uTorrent.Extensions");
 
+        /// <summary>
+        /// If there is no console output it's because the project type is set to Windows Application.
+        /// Change to console if you want, for example debug, or need more feedback when running.
+        /// </summary>
         static void Main(string[] args)
         {
             // Wait 5 seconds if contended – in case another instance

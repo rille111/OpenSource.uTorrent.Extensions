@@ -55,7 +55,7 @@
 
   // The actual extractor (7z is safest, not tested anything else)
   "UnpackerExeFileFullPath": "c:\\programs\\7z\\7z.exe",
-  "UnpackerHideWindow": "true", // If false, detailed errors from unpacker wont be logged, but you will have a window where u can observe the unpacking. Good for debugging
+  "UnpackerHideWindow": "true", // If false, some errors from unpacker cant be logged (because of 7z), but you will have a window where u can observe the unpacking. Good for debugging
   // Command template. Change only at your own risk! Supported params are:
   // Archive : full path to the archive first file
   // DestinationFolder : As it says, archives in sub folders will be extracted to correct subfolder in the destination
