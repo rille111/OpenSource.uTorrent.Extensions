@@ -60,7 +60,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
             foreach (var jToken in torrentsJArray)
             {
                 var torrent = new Torrent(jToken[0].ToString(), _config);
-                torrent.NumericStatus = (int)jToken[1];
+                torrent.TorrentStatus = (TorrentStatus)(int)jToken[1];
                 torrent.Name = jToken[2].ToString();
                 torrent.ProgressPercent = (int)jToken[4] / 10;
                 torrent.Path = jToken[26].ToString();
@@ -84,6 +84,16 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
             }
             return ret;
         }
+
+        public void Start(Torrent torrent)
+        {
+            var req = new RestRequest($"gui/?action=start&hash={torrent.Hash}");
+            var response = _restClient.Execute(req);
+
+            if (response.ResponseStatus != ResponseStatus.Completed || !IsSuccessStatusCode(response.StatusCode))
+                throw new System.Exception($"Invalid response from Torrent WebApi when starting Torrent. HttpStatus: {response.StatusCode} {response.StatusDescription}, Http: {response.ResponseStatus.ToString()}");
+        }
+
 
         public void DeleteTorrent(Torrent torrent)
         {
@@ -198,5 +208,6 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
         {
             return ((int)statusCode >= 200) && ((int)statusCode <= 299);
         }
+
     }
 }

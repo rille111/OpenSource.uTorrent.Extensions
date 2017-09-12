@@ -9,6 +9,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Model
     {
         public OperatingMode OperatingMode { get; set; }
         public int MaxProcessTorrentsInBatch { get; set; }
+        public bool RestartErrorTorrents { get; private set; }
         public bool DeleteFromTorrentsFolderWhenUnpacked { get; set; }
         public bool DeleteAlreadyProcessedTorrents { get; set; }
         public string FinalFolder { get; set; }
@@ -38,6 +39,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Model
 
             _config.OperatingMode = jReader.GetValue<OperatingMode>(nameof(_config.OperatingMode));
             _config.MaxProcessTorrentsInBatch = jReader.GetValue<int>(nameof(_config.MaxProcessTorrentsInBatch));
+            _config.RestartErrorTorrents = jReader.GetValue<bool>(nameof(_config.RestartErrorTorrents));
             _config.DeleteFromTorrentsFolderWhenUnpacked = jReader.GetValue<bool>(nameof(_config.DeleteFromTorrentsFolderWhenUnpacked));
             _config.DeleteAlreadyProcessedTorrents = jReader.GetValue<bool>(nameof(_config.DeleteAlreadyProcessedTorrents));
 

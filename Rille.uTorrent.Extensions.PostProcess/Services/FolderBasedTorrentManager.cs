@@ -136,5 +136,10 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
                 failedMarkerFile.Create().Close();
             }
         }
+
+        public void Start(Torrent torrent)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

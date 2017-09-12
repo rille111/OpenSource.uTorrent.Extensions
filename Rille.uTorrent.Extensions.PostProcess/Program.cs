@@ -7,8 +7,6 @@ using System.Threading;
 
 namespace Rille.uTorrent.Extensions.PostProcess
 {
-    //TODO: Iterate subfolders and unpack to destination, and then skip those that are archives
-    //TODO: Support Ignore file pattern, like .sfv
     class Program
     {
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
@@ -23,14 +21,15 @@ namespace Rille.uTorrent.Extensions.PostProcess
         {
             // Wait 5 seconds if contended – in case another instance
             // of the program is in the process of shutting down.
-            if (!mutex.WaitOne(TimeSpan.FromSeconds(5), false))
+            if (!mutex.WaitOne(TimeSpan.FromSeconds(1), false))
             {
                 _logger.Debug("- Another instance of the app is running. Bye!");
                 return;
             }
             try
             {
-                Run(args);
+                var exitCode = Run(args);
+                ExitApp(exitCode);
             }
             finally
             {
@@ -38,7 +37,7 @@ namespace Rille.uTorrent.Extensions.PostProcess
             }
         }
 
-        private static void Run(string[] args)
+        private static int Run(string[] args)
         {
             try
             {
@@ -48,6 +47,20 @@ namespace Rille.uTorrent.Extensions.PostProcess
                 CreateTorrentManager();
 
                 var torrents = _torrentManager.GetTorrentList();
+
+                if (torrents == null || torrents.Count == 0)
+                {
+                    _logger.Error("No torrents found!");
+                    return 666;
+                }
+
+                if (_config.RestartErrorTorrents)
+                {
+                    foreach (var torrent in torrents.Where(p => p.TorrentStatus.HasFlag(TorrentStatus.Error)))
+                    {
+                        _torrentManager.Start(torrent);
+                    }
+                }
 
                 _logger.Info($"LOOPING TORRENTS");
                 foreach (var torrent in torrents)
@@ -63,7 +76,7 @@ namespace Rille.uTorrent.Extensions.PostProcess
                     if (processedTorrentsCount >= _config.MaxProcessTorrentsInBatch)
                     {
                         // Enough in this batch already. Exit.
-                        _logger.Info($"- Already Processed {processedTorrentsCount} in this batch which was the configured max, exiting..");
+                        _logger.Debug($"- Already Processed {processedTorrentsCount} in this batch which was the configured max, exiting..");
                         break;
                     }
                 }
@@ -72,8 +85,9 @@ namespace Rille.uTorrent.Extensions.PostProcess
             catch (Exception ex)
             {
                 _logger.Fatal(ex, "Unexpected error occurred.");
+                return 666;
             }
-            WaitAndExit();
+            return 0;
         }
 
         private static void HandleUnprocessedTorrent(Torrent torrent)
@@ -83,7 +97,7 @@ namespace Rille.uTorrent.Extensions.PostProcess
                 if (processedTorrentsCount >= _config.MaxProcessTorrentsInBatch)
                 {
                     // Enough in this batch already. Exit.
-                    _logger.Info($"- Already Processed {processedTorrentsCount} in this batch which was the configured max, exiting..");
+                    _logger.Debug($"- Already Processed {processedTorrentsCount} in this batch which was the configured max, exiting..");
                     return;
                 }
 
@@ -98,15 +112,15 @@ namespace Rille.uTorrent.Extensions.PostProcess
                 {
                     // Mark torrent as finished
                     _torrentManager.MarkTorrentAsProcessed(torrent);
-                    _logger.Info($"- Torrent processed.");
+                    _logger.Info($"- Torrent process OK!");
 
                     if (_torrentManager.HasTorrentBeenProcessed(torrent) && _torrentManager.HasTorrentGoalsBeenReached(torrent))
                     {
                         // Delete if goals reached and torrent processed ok, if configured as such.
                         if (_config.DeleteFromTorrentsFolderWhenUnpacked)
                         {
+                            _logger.Info("- Deleting (torrent is processed and goals has been reached.");
                             _torrentManager.DeleteTorrent(torrent);
-                            _logger.Info("- Deleting processed torrent, goals has been reached.");
                         }
                     }
                 }
@@ -123,11 +137,10 @@ namespace Rille.uTorrent.Extensions.PostProcess
         {
             if (_torrentManager.HasTorrentBeenProcessed(torrent))
             {
-                _logger.Info($"- Torrent has already been processed. Do anything with it?");
                 if (_torrentManager.HasTorrentGoalsBeenReached(torrent) && _config.DeleteAlreadyProcessedTorrents)
                 {
                     // Torrents goal reached, and configured to deleted finished torrents, so delete it.
-                    _logger.Info("- Deleting processed torrent, goals has been reached.");
+                    _logger.Info("- Deleting (torrent is processed and goals has been reached.");
                     _torrentManager.DeleteTorrent(torrent);
                 }
             }
@@ -136,10 +149,10 @@ namespace Rille.uTorrent.Extensions.PostProcess
         private static void LogStartProcessTorrent(Torrent torrent)
         {
             _logger.Info($"Torrent: {torrent.Name} -");
-            _logger.Info($"- TorrentStatus: {torrent.TorrentStatus}");
-            _logger.Info($"- ProcessingStatus: {torrent.ProcessingStatus}");
-            _logger.Info($"- IsDownloaded: {torrent.IsDownloaded}");
-            _logger.Info($"- HasTorrentGoalsBeenReached: {_torrentManager.HasTorrentGoalsBeenReached(torrent)}");
+            _logger.Debug($"- Status: {torrent.TorrentStatus}");
+            _logger.Debug($"- ProcessingStatus: {torrent.ProcessingStatus}");
+            _logger.Debug($"- IsDownloaded: {torrent.IsDownloaded}");
+            _logger.Debug($"- HasTorrentGoalsBeenReached: {_torrentManager.HasTorrentGoalsBeenReached(torrent)}");
             _logger.Debug($"- Ratio: {torrent.ActualSeedRatioPercent}");
             _logger.Debug($"- Path: {torrent.Path}");
             _logger.Debug($"- IsFolder: {torrent.IsFolder}");
@@ -172,11 +185,11 @@ namespace Rille.uTorrent.Extensions.PostProcess
             }
         }
 
-        private static void WaitAndExit()
+        private static void ExitApp(int exitCode)
         {
             Console.WriteLine("-- Finished, press any key to exit --");
-            Console.ReadKey();
-            Environment.Exit(1);
+            //Console.ReadKey();
+            Environment.Exit(exitCode);
         }
 
     }

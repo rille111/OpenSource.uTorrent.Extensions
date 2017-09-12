@@ -27,7 +27,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
 
                 if (torrent.IsSingleFileButNotArchive)
                 {
-                    _logger.Info($" - Copying single file (not archive) torrent.");
+                    _logger.Debug($" - Copying single file (not archive) torrent.");
 
                     var sourceFile = new FileInfo(Path.Combine(torrent.Path, torrent.FileList[0]));
                     var newDir = Directory.CreateDirectory(torrent.DestinationFolder);
@@ -36,7 +36,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
                 }
                 else if (torrent.IsSingleFileAndArchive)
                 {
-                    _logger.Info($" - Unpacking single file torrent.");
+                    _logger.Debug($" - Unpacking single file torrent.");
 
                     var sourceFile = new FileInfo(Path.Combine(torrent.Path, torrent.FileList[0]));
                     var newDir = Directory.CreateDirectory(torrent.DestinationFolder);
@@ -45,7 +45,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
                 else if (torrent.IsFolder)
                 {
                     // First copy the non-archive files! in torrent folder
-                    _logger.Info($" - Copying non-archive files in Torrent parent folder.");
+                    _logger.Debug($" - Copying non-archive files in Torrent parent folder.");
 
                     if (!Directory.Exists(torrent.DestinationFolder))
                         Directory.CreateDirectory(torrent.DestinationFolder);
@@ -73,13 +73,13 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
                         _fileManager.CopyFolderRecursivelyExceptIgnoredStuffAndArchiveFirstFiles(subfolder.FullName, $"{torrent.DestinationFolder}\\{subfolder.Name}", true);
                     }
 
-                    _logger.Info($" - Processing sub folders (Unpack archives, copy non-archives) to {torrent.DestinationFolder}");
+                    _logger.Debug($" - Processing sub folders (Unpack archives, copy non-archives) to {torrent.DestinationFolder}");
                     exitCode = UnpackTorrentRecursively(torrent);
                 }
 
                 if (exitCode == 0)
                 {
-                    _logger.Info($" - Process OK!");
+                    _logger.Debug($" - Process OK!");
                     return true;
                 }
                 else

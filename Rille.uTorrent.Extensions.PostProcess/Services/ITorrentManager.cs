@@ -7,6 +7,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
     {
         void DeleteTorrent(Torrent torrent);
         List<Torrent> GetTorrentList();
+        void Start(Torrent torrent);
         bool HasTorrentBeenProcessed(Torrent torrent);
         bool HasTorrentGoalsBeenReached(Torrent torrent);
         void MarkTorrentAsProcessing(Torrent torrent);

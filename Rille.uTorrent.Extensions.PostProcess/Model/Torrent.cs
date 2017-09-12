@@ -17,8 +17,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Model
         }
 
         public string Hash { get; set; }
-        public int NumericStatus { get; set; }
-        public TorrentStatus TorrentStatus => (TorrentStatus)NumericStatus;
+        public TorrentStatus TorrentStatus { get; set; }
         public string Name { get; set; }
         public string Path { get; set; }
         public int ActualSeedRatioPercent { get; set; }
@@ -38,7 +37,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Model
         private bool IsSingleFile(out string fileExtension)
         {
             fileExtension = "";
-            
+
             if (FileList != null && FileList.Count == 1)
             {
                 fileExtension = new FileInfo(FileList[0]).Extension.ToLower().Trim('.');
@@ -90,11 +89,16 @@ namespace Rille.uTorrent.Extensions.PostProcess.Model
         public ProcessingStatus ProcessingStatus { get; set; }
     }
 
+    [Flags]
     public enum TorrentStatus
     {
-        CompletelyFinished = 136,
-        ActivelySeeding = 201,
-        ErrorNetworkPathNA = 152,
-        ForcedSeeding = 137
+        Started = 1,
+        Checking = 2,
+        StartAfterCheck = 4,
+        Checked = 8,
+        Error = 16,
+        Paused = 32,
+        Queued = 64,
+        Loaded = 128
     }
 }

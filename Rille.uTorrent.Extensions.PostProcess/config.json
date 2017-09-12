@@ -1,8 +1,6 @@
 ﻿{
-  // TODO: Logic for how to handle torrents in error status (skip? start? what if goals are reached?) Begin with handling error-torrents at least.
-  // TODO: Mutex, to stop multiple instances of the program!
   // TODO: Document with examples, and release-package
-  // TODO: Test UnpackTorrentsFolderOnly after all fixing
+  // TODO: Test UnpackTorrentsFolderOnly after all fixing (ITS UNTESTED NOW!!!!)
 
   // Operating mode
   // WorkWithTorrentApi : Uses the torrent web api to to work with torrents, using labels to set working status.
@@ -12,13 +10,16 @@
   // Exits after these many torrents
   "MaxProcessTorrentsInBatch": "99",
 
+  // Restart torrent if network path not found or network error.
+  "RestartErrorTorrents":  true,
+
   // Folders
   "FinalFolder": "Z:\\torrents\\unpacked\\",
   "DownloadedTorrentsFolder": "Z:\\torrents\\finished\\",
 
   // Delete strategies
-  "DeleteFromTorrentsFolderWhenUnpacked": true, // Deletes instantly, when processing is complete
-  "DeleteAlreadyProcessedTorrents": true, // Deletes only the next run of the program. Safety mechanism if you wanna verify that processing first worked as expected.
+  "DeleteFromTorrentsFolderWhenUnpacked": true, // Deletes torrent when processing is complete (and goals reached). Safety mechanism.
+  "DeleteAlreadyProcessedTorrents": true, // Deletes only the next run of the program, if the torrents are already processed.
 
   // Supported archives (possible file-extension of the first file of an archive multivolume). Keep lowercase!
   "ArchiveFirstFilePossibleFileExtensions": [ "rar", "zip", "7z" ], // Must be lowercase!
