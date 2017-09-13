@@ -76,7 +76,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
                 }
                     
 
-                PopulateTorrentProperties(torrent);
+                PopulateTorrentTrackers(torrent);
                 PopulateTorrentFileList(torrent);
                 MatchSeedingGoalsWithTracker(torrent);
 
@@ -133,7 +133,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
 
         // Private helpers
 
-        private void PopulateTorrentProperties(Torrent torrent)
+        private void PopulateTorrentTrackers(Torrent torrent)
         {
             var req = new RestRequest("gui/?action=getprops&hash=" + torrent.Hash);
             var response = _restClient.Execute(req);

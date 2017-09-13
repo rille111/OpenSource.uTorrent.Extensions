@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading;
 
-namespace Rille.uTorrent.Extensions.PostProcess
+namespace Rille.uTorrent.Extensions.PostProcess.Hidden
 {
     class Program
     {
@@ -30,6 +30,6 @@ namespace Rille.uTorrent.Extensions.PostProcess
                 mutex.ReleaseMutex();
             }
         }
-        
+
     }
 }
