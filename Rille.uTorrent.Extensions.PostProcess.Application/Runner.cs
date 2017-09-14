@@ -29,11 +29,13 @@ namespace Rille.uTorrent.Extensions.PostProcess
                 ValidateConfig();
                 CreateTorrentManager();
 
-                var torrents = _torrentManager.GetTorrentList();
+                var onlyThisTorrent = args?.Length > 0 ? args[0] : "";
+                LogTorrentHash(onlyThisTorrent);
+                var torrents = _torrentManager.GetTorrents(onlyThisTorrent);
 
                 if (torrents == null || torrents.Count == 0)
                 {
-                    _logger.Error("No torrents found!");
+                    _logger.Info("No torrents found!");
                     return 666;
                 }
 
@@ -71,6 +73,12 @@ namespace Rille.uTorrent.Extensions.PostProcess
                 return 666;
             }
             return 0;
+        }
+
+        private void LogTorrentHash(string onlyThisTorrent)
+        {
+            if (!string.IsNullOrEmpty(onlyThisTorrent))
+                _logger.Debug("Argument torrent hash received: " + onlyThisTorrent);
         }
 
         private void HandleUnprocessedTorrent(Torrent torrent)

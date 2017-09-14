@@ -33,7 +33,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
             }
         }
 
-        public List<Torrent> GetTorrentList()
+        public List<Torrent> GetTorrents(string torrentHash = null)
         {
             var torrents = new List<Torrent>();
 

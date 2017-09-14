@@ -41,7 +41,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
             this.fileManager = fileManager;
         }
 
-        public List<Torrent> GetTorrentList()
+        public List<Torrent> GetTorrents(string torrentHash = null)
         {
             var ret = new List<Torrent>();
             var req = new RestRequest("gui/?list=1");
@@ -59,7 +59,14 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
             var torrentsJArray = (JArray)json.torrents;
             foreach (var jToken in torrentsJArray)
             {
-                var torrent = new Torrent(jToken[0].ToString(), _config);
+                var hash = jToken[0].ToString();
+
+                // Only load the requested torrent?
+                if (!string.IsNullOrEmpty(torrentHash))
+                    if (hash != torrentHash)
+                        continue;
+
+                var torrent = new Torrent(hash, _config);
                 torrent.TorrentStatus = (TorrentStatus)(int)jToken[1];
                 torrent.Name = jToken[2].ToString();
                 torrent.ProgressPercent = (int)jToken[4] / 10;
