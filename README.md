@@ -1,6 +1,7 @@
 # Rille.uTorrent.Extensions
 
 Post processing to uTorrent/Bittorrent
+Warning! The code is not elegant, since this is a hobby project that took too much time I just need to finish functionality and therefore code quality is suboptimal. Just FYI.
 
 ## What it does 
 
