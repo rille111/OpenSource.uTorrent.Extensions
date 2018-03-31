@@ -12,6 +12,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
         private readonly Config _config;
         private readonly FileManager _fileManager;
         private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+        public string LastUnpackCommand;
 
         public Unpacker(Config config, FileManager fileManager)
         {
@@ -84,7 +85,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
                 }
                 else
                 {
-                    _logger.Error($" - Error! When unpacking: {torrent.Name}. ExitCode from unpacker was: {exitCode}. Investigate log for details, see Warnings.");
+                    _logger.Error($" - Error! When unpacking: {torrent.Name}. Investigate log for details, see Warnings.");
                     Directory.Delete(torrent.DestinationFolder, true);
                     return false;
                 }
@@ -110,15 +111,19 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
                 // Get only the subfolder path (not the entire path) so that we know where to copy to (a new folder in the destination)
                 var sourceFileSubFolder = fileFirstInArchive.DirectoryName
                     .Replace(torrentFolderName, string.Empty)
-                    .Trim('\\')
+                    //.Trim('\\')
                     ;
                 var destinationFolder = Path.Combine(torrent.DestinationFolder, sourceFileSubFolder);
 
                 var unpackCommand = _config.UnpackerParameters
                     .Replace("[Archive]", $"\"{fileFirstInArchive.FullName}\"")
                     .Replace("[DestinationFolder]", $"\"{destinationFolder}\"")
-                    .Replace(@"\\", @"\");
-                exitCode += ExecuteUnpackCommand(unpackCommand);
+                    //.Replace(@"\\", @"\")
+                    ;
+                exitCode = ExecuteUnpackCommand(unpackCommand);
+
+                if (exitCode > 0)
+                    break;
             }
             return exitCode;
         }
@@ -128,13 +133,16 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
             var unpackCommand = _config.UnpackerParameters
                 .Replace("[Archive]", $"\"{sourceFile.FullName}\"")
                 .Replace("[DestinationFolder]", $"\"{destinationDir}\"")
-                .Replace(@"\\", @"\");
+                //.Replace(@"\\", @"\")
+                ;
 
             return ExecuteUnpackCommand(unpackCommand);
         }
 
         private int ExecuteUnpackCommand(string unpackCommand)
         {
+            var errorOccurred = false;
+            LastUnpackCommand = $"{_config.UnpackerExeFileFullPath} {unpackCommand}";
             var exitCode = 0;
             var startInfo = new ProcessStartInfo(_config.UnpackerExeFileFullPath, unpackCommand);
             startInfo.CreateNoWindow = _config.UnpackerHideWindow;
@@ -152,8 +160,11 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
             };
             process.ErrorDataReceived += (sender, args) =>
             {
-                if (string.IsNullOrEmpty(args?.Data?.Trim().Trim('.')))
+                if (!string.IsNullOrEmpty(args?.Data?.Trim().Trim('.')))
+                {
+                    errorOccurred = true;
                     _logger.Warn(args.Data);
+                }
             };
 
             _logger.Debug($" - Starting process: {_config.UnpackerExeFileFullPath} {unpackCommand}");
@@ -166,7 +177,7 @@ namespace Rille.uTorrent.Extensions.PostProcess.Services
 
             }
             process.WaitForExit();
-            exitCode += process.ExitCode;
+            exitCode = process.ExitCode;
 
             return exitCode;
         }

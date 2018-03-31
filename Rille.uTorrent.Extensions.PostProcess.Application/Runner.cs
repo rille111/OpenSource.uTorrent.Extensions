@@ -120,7 +120,7 @@ namespace Rille.uTorrent.Extensions.PostProcess
                 else
                 {
                     // Unpack error!! Quit!
-                    _logger.Error($"- Failed to process torrent! Investigate logs.");
+                    _logger.Error($"- Failed to process torrent! Investigate logs. {nameof(unpacker.LastUnpackCommand)}: {unpacker.LastUnpackCommand}");
                     _torrentManager.MarkTorrentAsProcessFailed(torrent);
                 }
             }

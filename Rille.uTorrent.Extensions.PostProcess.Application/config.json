@@ -7,7 +7,7 @@
   "OperatingMode": "WorkWithTorrentApi",
 
   // Exits after these many torrents
-  "MaxProcessTorrentsInBatch": "99",
+  "MaxProcessTorrentsInBatch": "1",
 
   // Restart torrent if network path not found or network error.
   "RestartErrorTorrents":  true,
