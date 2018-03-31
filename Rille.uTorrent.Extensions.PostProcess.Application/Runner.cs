@@ -29,6 +29,7 @@ namespace Rille.uTorrent.Extensions.PostProcess
                 ValidateConfig();
                 CreateTorrentManager();
 
+                // All torrents or only one?
                 var onlyThisTorrent = args?.Length > 0 ? args[0] : "";
                 LogTorrentHash(onlyThisTorrent);
                 var torrents = _torrentManager.GetTorrents(onlyThisTorrent);
@@ -39,6 +40,7 @@ namespace Rille.uTorrent.Extensions.PostProcess
                     return 666;
                 }
 
+                // Restart failed torrents
                 if (_config.RestartErrorTorrents)
                 {
                     foreach (var torrent in torrents.Where(p => p.TorrentStatus.HasFlag(TorrentStatus.Error)))
